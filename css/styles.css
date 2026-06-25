@@ -79,7 +79,7 @@ body {
 .btn-ghost { background: var(--surface-2); color: var(--muted); }
 .btn-sm { font-size: 13px; padding: 8px 14px; }
 .btn-blue { background: #3F7DD6; color:#fff; }
-.btn-tap { background: var(--coral); color:#fff; font-size: 20px; padding: 15px 32px; }
+.btn-tap { background: var(--coral); color:#fff; font-size: 24px; padding: 18px 40px; }
 .btn-block { width: 100%; padding: 14px; }
 
 /* ---------- ENTRY ---------- */
@@ -193,7 +193,7 @@ body {
 .cal-instr { font-size: 16px; color: var(--ink); margin: 0 0 18px; font-weight:600; }
 .cal-stage { position: relative; width: min(300px, calc(100vw - 56px)); aspect-ratio: 4 / 3; margin: 0 auto 18px; border-radius: var(--radius-lg);
   overflow: hidden; background:#dfeaf3; box-shadow: var(--shadow-sm); }
-.cal-video { width:100%; height:100%; object-fit: cover; transform: scaleX(-1); }
+.cal-video { width:100%; height:100%; object-fit: cover; transform: scaleX(-1) scale(2); transform-origin: center; }
 .cal-guide { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:130px; height:170px;
   border:3px dashed rgba(255,255,255,.9); border-radius:50%; pointer-events:none; }
 /* big on-screen cue that tells first-timers exactly what to do */
@@ -364,41 +364,41 @@ body {
 .selfview { position:absolute; bottom: 110px; left: 12px; width: 126px; height: 102px; background: rgba(255,255,255,.93);
   border:1px solid var(--line); border-radius: 14px; overflow:hidden; z-index: 12; }
 .selfview-label { position:absolute; top:6px; left:10px; font-size: 11px; color: var(--faint); z-index:2; }
-.selfview-video { width:100%; height:100%; object-fit: cover; transform: scaleX(-1); background:#dfeaf3; }
+.selfview-video { width:100%; height:100%; object-fit: cover; transform: scaleX(-1) scale(2); transform-origin: center; background:#dfeaf3; }
 .selfview-status { position:absolute; bottom:7px; left:8px; right:8px; display:flex; align-items:center; gap:5px;
   background: rgba(225,245,238,.95); color:#085041; border-radius:8px; padding: 2px 8px; font-size: 11px; z-index:2; }
 .selfview-status.off .sv-dot { background:#B4B2A9; }
 .sv-dot { width:6px; height:6px; border-radius:50%; background:#1D9E75; flex:none; }
 
-.actionbar { position:absolute; bottom:0; left:0; right:0; min-height: 132px; background: rgba(255,255,255,.97);
-  border-top:2px solid var(--line); border-radius: 22px 22px 0 0; padding: 16px 20px 20px; z-index: 18;
-  display:flex; flex-direction:column; gap: 12px; box-shadow: 0 -6px 20px rgba(44,44,42,.08); }
-.actionbar-top { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.ab-phase { font-family: var(--font-display); font-size: 22px; }
-.ab-hint { font-size: 13.5px; color: var(--muted); text-align:right; }
+.actionbar { position:absolute; bottom:0; left:0; right:0; min-height: 172px; background: rgba(255,255,255,.98);
+  border-top:2px solid var(--line); border-radius: 24px 24px 0 0; padding: 20px 24px 26px; z-index: 18;
+  display:flex; flex-direction:column; gap: 16px; box-shadow: 0 -8px 24px rgba(44,44,42,.10); }
+.actionbar-top { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.ab-phase { font-family: var(--font-display); font-size: 27px; }
+.ab-hint { font-size: 16px; color: var(--muted); text-align:right; }
 .ab-ctrl { }
-.ab-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.next-hint { font-size: 14px; color: var(--muted); font-weight:600; display:flex; align-items:center; gap:8px; white-space:nowrap; }
+.ab-row { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.next-hint { font-size: 16px; color: var(--muted); font-weight:700; display:flex; align-items:center; gap:10px; white-space:nowrap; }
 
 /* face-mode live guidance (replaces the click buttons during a cast/hook) */
-.guide-live { display:flex; align-items:center; gap:14px; }
-.gl-emoji { font-size: 40px; line-height:1; flex:none; animation: glPulse 1.2s ease-in-out infinite; }
-.gl-text { font-size: 18px; color: var(--ink); line-height:1.35; font-weight: 600; }
+.guide-live { display:flex; align-items:center; gap:18px; background: var(--surface-2); border-radius: 16px; padding: 14px 18px; }
+.gl-emoji { font-size: 56px; line-height:1; flex:none; animation: glPulse 1.2s ease-in-out infinite; }
+.gl-text { font-size: 22px; color: var(--ink); line-height:1.4; font-weight: 700; flex:1; }
 .gl-text b { color: var(--coral-strong, #C0392B); }
-.gl-gauge { flex:none; width: 110px; height: 16px; }
+.gl-gauge { flex:none; width: 150px; height: 24px; }
 .gl-gauge .gauge-fill, .cast-fill { background: var(--coral); }
 @keyframes glPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
-.wait-box { display:flex; align-items:center; gap:12px; }
-.wait-rod { font-size: 34px; line-height:1; flex:none; animation: waitBob 1.8s ease-in-out infinite; }
+.wait-box { display:flex; align-items:center; gap:14px; background: var(--surface-2); border-radius: 16px; padding: 14px 18px; }
+.wait-rod { font-size: 46px; line-height:1; flex:none; animation: waitBob 1.8s ease-in-out infinite; }
 @keyframes waitBob { 0%,100%{transform:translateY(0) rotate(-6deg)} 50%{transform:translateY(-3px) rotate(6deg)} }
 @media (prefers-reduced-motion: reduce) { .gl-emoji, .wait-rod { animation: none; } }
-.gauge { height: 18px; border-radius:999px; background:#E6E3DB; overflow:hidden; }
+.gauge { height: 22px; border-radius:999px; background:#E6E3DB; overflow:hidden; }
 .gauge-fill { height:100%; width:0%; background: var(--common-dot); transition: width .12s ease; border-radius:999px; }
-.timer { font-size: 16px; color:#9A4A0E; font-weight:700; }
-.tapn { font-size: 14px; color: var(--muted); white-space:nowrap; min-width: 56px; text-align:right; font-weight:600; }
-.result { display:flex; align-items:center; gap: 12px; }
-.result-icc { width: 52px; height: 52px; border-radius: 12px; background: var(--surface-2); display:flex; align-items:center; justify-content:center; font-size: 30px; }
-.result-name { font-size: 18px; font-weight: 700; }
+.timer { font-size: 20px; color:#9A4A0E; font-weight:700; }
+.tapn { font-size: 17px; color: var(--muted); white-space:nowrap; min-width: 64px; text-align:right; font-weight:700; }
+.result { display:flex; align-items:center; gap: 14px; }
+.result-icc { width: 62px; height: 62px; border-radius: 14px; background: var(--surface-2); display:flex; align-items:center; justify-content:center; font-size: 36px; }
+.result-name { font-size: 22px; font-weight: 700; }
 
 /* ---------- toast ---------- */
 .toast { position:absolute; top: 56px; left:50%; transform: translateX(-50%); background: rgba(44,44,42,.92); color:#fff;

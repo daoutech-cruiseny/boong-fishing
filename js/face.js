@@ -33,6 +33,8 @@ export class FaceTracker {
     this._stream = null;
     this._running = false;
     this._lastTs = -1;
+    this.zoom = 2;                 // digital zoom fed to the detector (bigger face)
+    this._canvas = null; this._ctx = null;
     this._recalcTh();
   }
 
@@ -74,17 +76,19 @@ export class FaceTracker {
     videoEl.srcObject = this._stream;
     await videoEl.play();
 
-    // Try a ~2x camera zoom where supported — a bigger face means the mouth
-    // gestures read reliably from a comfortable seated distance.
+    // Optional native zoom on cameras that expose it (rare); the software
+    // canvas zoom below is the universal path and works on every webcam.
     try {
       const track = this._stream.getVideoTracks()[0];
       const caps = track && track.getCapabilities ? track.getCapabilities() : null;
       if (caps && caps.zoom) {
-        const target = Math.min(caps.zoom.max || 2, Math.max(caps.zoom.min || 1, 2));
+        const target = Math.min(caps.zoom.max || 1.5, Math.max(caps.zoom.min || 1, 1.5));
         await track.applyConstraints({ advanced: [{ zoom: target }] });
-        this.zoomApplied = target;
+        this._nativeZoom = target;
+        // native zoom already enlarges the face → lighten the software zoom
+        this.zoom = Math.max(1, 2 / target);
       }
-    } catch (e) { /* zoom unsupported — adaptive thresholds still handle distance */ }
+    } catch (e) { /* unsupported — software zoom handles it */ }
 
     // 2) model (CDN). If this fails we keep camera but no detection.
     try {
@@ -114,12 +118,26 @@ export class FaceTracker {
       if (ts <= this._lastTs) ts = this._lastTs + 1;
       this._lastTs = ts;
       try {
-        const res = this._landmarker.detectForVideo(this._video, ts);
+        const res = this._landmarker.detectForVideo(this._zoomedInput(), ts);
         this._consume(res);
       } catch (e) { /* transient */ }
     }
     requestAnimationFrame(this._loop);
   };
+
+  // center-crop + upscale the frame so the face fills more of what the
+  // detector sees — a software 2x zoom that works on every webcam.
+  _zoomedInput() {
+    const v = this._video;
+    const z = this.zoom || 1;
+    if (z <= 1 || !v.videoWidth) return v;
+    const sw = Math.round(v.videoWidth / z), sh = Math.round(v.videoHeight / z);
+    const sx = Math.round((v.videoWidth - sw) / 2), sy = Math.round((v.videoHeight - sh) / 2);
+    if (!this._canvas) { this._canvas = document.createElement("canvas"); this._ctx = this._canvas.getContext("2d"); }
+    if (this._canvas.width !== sw || this._canvas.height !== sh) { this._canvas.width = sw; this._canvas.height = sh; }
+    this._ctx.drawImage(v, sx, sy, sw, sh, 0, 0, sw, sh);
+    return this._canvas;
+  }
 
   _consume(res) {
     const hasFace = res && res.faceLandmarks && res.faceLandmarks.length > 0;
