@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>붕어 낚시터</title>
+<meta name="description" content="입을 'O'로 벌리면 붕어가 되어 낚시! 사내 웹캠 낚시 게임" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎣%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<!-- ============ ENTRY ============ -->
+<section id="screen-entry" class="screen is-active">
+  <div class="pond-bg" aria-hidden="true">
+    <span class="sun"></span>
+  </div>
+  <div class="entry-card">
+    <div class="brand"><span class="brand-fish" aria-hidden="true"></span><h1 class="brand-name">붕어 낚시터</h1></div>
+    <p class="brand-tag">점심·쉬는시간에 즐기는 사내 웹캠 낚시터</p>
+
+    <label class="field-label" for="nickname">닉네임</label>
+    <div class="field-row">
+      <input id="nickname" class="field-input" type="text" maxlength="12" placeholder="예: 김붕어" autocomplete="off" />
+      <span id="nick-status" class="nick-status" aria-live="polite"></span>
+    </div>
+
+    <p class="perm-note"><span class="i-cam" aria-hidden="true"></span>낚시하려면 카메라 권한이 필요해요. 영상은 기기에서만 처리되고 저장·전송되지 않아요.</p>
+
+    <button id="btn-start" class="btn btn-primary btn-block">낚시 시작</button>
+    <p id="entry-error" class="entry-error" role="alert" hidden></p>
+  </div>
+  <footer class="entry-foot">가짜 보상으로 즐기는 재미용 게임 · v0.1</footer>
+</section>
+
+<!-- ============ CALIBRATION ============ -->
+<section id="screen-cal" class="screen">
+  <div class="cal-wrap">
+    <h2 class="cal-title">붕어 캘리브레이션</h2>
+    <p id="cal-instr" class="cal-instr">정면을 본 상태로 잠깐만 기다려 주세요</p>
+
+    <div class="cal-stage">
+      <video id="cal-video" class="cal-video" playsinline muted></video>
+      <div class="cal-guide" aria-hidden="true"></div>
+      <div id="cal-badge" class="cal-badge">얼굴을 찾는 중…</div>
+    </div>
+
+    <div class="cal-steps">
+      <div id="cal-step-1" class="cal-step"><span class="cal-dot"></span>정면 인식</div>
+      <div id="cal-step-2" class="cal-step"><span class="cal-dot"></span>입 'O' 인식</div>
+    </div>
+
+    <div class="cal-actions">
+      <button id="btn-cal-neutral" class="btn btn-primary">정면 보정 시작</button>
+      <button id="btn-cal-skip" class="btn btn-ghost">건너뛰기</button>
+    </div>
+    <p class="cal-note">잘 안되면 밝은 곳에서 얼굴을 화면 가운데 맞춰 주세요.</p>
+  </div>
+</section>
+
+<!-- ============ LOBBY (MAIN GAME) ============ -->
+<section id="screen-lobby" class="screen">
+  <div class="game">
+    <div class="pond-bg" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <span class="room-name">저수지 1호</span>
+      <div class="topbar-right">
+        <button id="btn-eohang" class="chip chip-btn"><span class="i-tank"></span>어항 <b id="eh-count">0</b></button>
+        <button id="btn-ranking" class="chip chip-btn"><span class="i-crown"></span>붕어왕 <b id="my-rank">–</b></button>
+        <button id="btn-settings" class="chip chip-btn" aria-label="설정"><span class="i-gear"></span></button>
+      </div>
+    </header>
+
+    <aside class="mini-rank" id="mini-rank" aria-label="실시간 랭킹"></aside>
+
+    <div id="players" class="players" aria-hidden="true"></div>
+
+    <div id="mybob" class="mybob" hidden><span class="mybob-alert" id="mybob-alert">!</span><span class="mybob-float"></span></div>
+
+    <!-- swipe / head-turn capture overlay (also accepts fallback) -->
+    <div id="castpad" class="castpad" hidden>
+      <div class="castpad-hint">고개를 빠르고 크게 돌렸다 정면으로!</div>
+      <div class="castpad-sub" id="castpad-sub">또는 화면을 휙 스와이프</div>
+    </div>
+
+    <aside class="selfview" id="selfview">
+      <span class="selfview-label">셀프뷰</span>
+      <video id="game-video" class="selfview-video" playsinline muted></video>
+      <div class="selfview-status" id="selfview-status"><span class="sv-dot"></span>대기 중</div>
+    </aside>
+
+    <div class="actionbar">
+      <div class="actionbar-top">
+        <span class="ab-phase" id="ab-phase">① 준비</span>
+        <span class="ab-hint" id="ab-hint"></span>
+      </div>
+      <div class="ab-ctrl" id="ab-ctrl"></div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+</section>
+
+<!-- ============ MODALS ============ -->
+<div id="panel-eohang" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head"><h2 class="modal-title">어항</h2><button class="modal-close" data-close="panel-eohang" aria-label="닫기">✕</button></div>
+    <div id="eohang-body" class="modal-body"></div>
+  </div>
+</div>
+
+<div id="panel-ranking" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head"><h2 class="modal-title">오늘의 붕어왕</h2><button class="modal-close" data-close="panel-ranking" aria-label="닫기">✕</button></div>
+    <div id="ranking-body" class="modal-body"></div>
+  </div>
+</div>
+
+<div id="panel-settings" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head"><h2 class="modal-title">설정</h2><button class="modal-close" data-close="panel-settings" aria-label="닫기">✕</button></div>
+    <div id="settings-body" class="modal-body"></div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
