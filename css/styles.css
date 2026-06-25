@@ -142,6 +142,7 @@ body {
 .topbar { position:absolute; top:0; left:0; right:0; height:48px; display:flex; align-items:center; justify-content:space-between;
   padding: 0 14px; background: rgba(255,255,255,.9); border-bottom:1px solid var(--line); z-index: 20; backdrop-filter: blur(4px); }
 .room-name { font-family: var(--font-display); font-size: 17px; color: var(--ink); }
+.online-count { font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: #2E7D32; margin-left: 4px; vertical-align: middle; }
 .topbar-right { display:flex; gap:8px; }
 .chip { display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--line); border-radius:999px;
   padding: 5px 12px; font-size: 13px; color: var(--muted); }

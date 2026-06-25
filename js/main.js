@@ -4,6 +4,7 @@ import {
   Store, ITEMS, TIERS, pickItem, hookDifficulty, castPowerFromYaw,
   depthLabel, QUOTE, clamp,
 } from "./game.js";
+import { Pond } from "./net.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -11,6 +12,8 @@ const $ = (id) => document.getElementById(id);
 let store = null;
 let face = null;
 let faceMode = false;            // true once camera + model are live
+let pond = null;                 // realtime presence/broadcast (null until lobby)
+let netUsers = [];               // live roster from Supabase presence
 const settings = { sensitivity: "normal", difficultyMult: 1, sfx: true, bgm: false, notify: false };
 const NOTIFY_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎣%3C/text%3E%3C/svg%3E";
 
@@ -189,6 +192,47 @@ function enterLobby() {
   bindLobbyControls();
   toReady();
   startNpcLoop();
+  connectPond();
+}
+
+// ---------- realtime (Supabase presence + catch broadcast) ----------
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+async function connectPond() {
+  if (pond) return;
+  pond = new Pond();
+  pond.onPresence = renderPresence;
+  pond.onCatch = onRemoteCatch;
+  let ok = false;
+  try { ok = await pond.connect(store.nickname); } catch (e) { ok = false; }
+  if (ok) { stopNpcLoop(); showToast("실시간 저수지에 입장했어요 🟢"); }
+}
+function renderPresence(users) {
+  netUsers = users || [];
+  const oc = $("online-count");
+  if (oc) { oc.hidden = false; oc.textContent = `🟢 ${netUsers.length}`; }
+  // render other anglers as pond avatars (exclude myself)
+  const others = netUsers.filter((u) => u.nick !== store.nickname);
+  const wrap = $("players"); wrap.innerHTML = "";
+  const xs = [18, 46, 74, 32, 60];
+  others.slice(0, 5).forEach((u, i) => {
+    const el = document.createElement("div");
+    el.className = "player";
+    el.style.left = (xs[i] || 50) + "%"; el.style.top = (17 + (i > 2 ? 9 : 0)) + "%";
+    el.innerHTML = `${fishSvg(FISH_COLORS[i % FISH_COLORS.length])}
+      <span class="player-tag">${escapeHtml(u.nick)}</span>
+      <span class="player-stat st-wait">낚시 중</span>`;
+    wrap.appendChild(el);
+  });
+}
+function onRemoteCatch(p) {
+  if (!p || p.nick === store.nickname) return;
+  const label = p.tierLabel ? p.tierLabel + " " : "";
+  const icon = p.icon ? p.icon + " " : "";
+  showToast(`${p.nick}님이 ${icon}${label}${p.itemName || "무언가"}을(를) 낚았어요!`);
+  if (document.hidden) showNotify("🎣 누가 낚았어요!", `${p.nick}: ${label}${p.itemName || ""}`, "remote-catch");
 }
 
 function refreshChips() {
@@ -351,6 +395,7 @@ function caught() {
   // celebratory sound
   blip(523, 0.09); setTimeout(() => blip(659, 0.09), 90); setTimeout(() => blip(784, 0.12), 180);
   if (document.hidden) showNotify("🎉 낚았어요!", `${t.label} ${item.name} 획득!`, "catch");
+  if (pond) pond.broadcastCatch({ nick: store.nickname, itemName: item.name, tierLabel: t.label, tier: item.tier, icon: item.icon });
   if (t.rank >= 3) showToast(`${store.nickname}님이 ${t.label} ${item.name}을(를) 낚았어요!`);
 }
 
@@ -454,6 +499,7 @@ function renderNpcs() {
   });
 }
 let npcTimer = null;
+function stopNpcLoop() { if (npcTimer) { clearInterval(npcTimer); npcTimer = null; } }
 function startNpcLoop() {
   if (npcTimer) clearInterval(npcTimer);
   const states = [["대기", "st-wait"], ["입질!", "st-bite"], ["낚는 중", "st-bite"], ["획득!", "st-catch"]];
