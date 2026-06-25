@@ -12,9 +12,9 @@ export const TIERS = {
 
 // `big: true` → creature that dramatically breaches the water on reel-in.
 export const ITEMS = [
-  { id: "weed",     name: "물풀",            tier: "junk",   weight: 22,  icon: "🌿" },
-  { id: "boot",     name: "낡은 장화",        tier: "junk",   weight: 14,  icon: "👢" },
-  { id: "can",      name: "녹슨 깡통",        tier: "junk",   weight: 12,  icon: "🥫" },
+  { id: "weed",     name: "물풀",            tier: "junk",   weight: 12,  icon: "🌿" },
+  { id: "boot",     name: "낡은 장화",        tier: "junk",   weight: 6,   icon: "👢" },
+  { id: "can",      name: "녹슨 깡통",        tier: "junk",   weight: 5,   icon: "🥫" },
   { id: "fish",     name: "물고기",          tier: "common", weight: 18,  icon: "🐟", big: true },
   { id: "coin",     name: "동전",            tier: "common", weight: 12,  icon: "🪙" },
   { id: "marble",   name: "유리 구슬",        tier: "common", weight: 8,   icon: "🔵" },
@@ -65,11 +65,15 @@ export function hookDifficulty(power, globalMult = 1) {
 }
 
 export function pickItem(power = 0) {
-  const mult = power > 0.7 ? 1.8 : power > 0.4 ? 1.2 : 1;
-  const weighted = ITEMS.map((it) => ({
-    it,
-    w: TIERS[it.tier].rank >= 2 ? it.weight * mult : it.weight,
-  }));
+  const rareMult = power > 0.7 ? 1.8 : power > 0.4 ? 1.2 : 1;
+  const junkMult = clamp(0.55 - 0.3 * power, 0.25, 0.55);   // fewer 꽝, even fewer when deep
+  const weighted = ITEMS.map((it) => {
+    const rank = TIERS[it.tier].rank;
+    let w = it.weight;
+    if (rank === 0) w *= junkMult;          // 꽝 dampened
+    else if (rank >= 2) w *= rareMult;       // rare+ boosted on deep casts
+    return { it, w };
+  });
   let total = weighted.reduce((s, x) => s + x.w, 0);
   let r = Math.random() * total;
   for (const x of weighted) { r -= x.w; if (r <= 0) return x.it; }

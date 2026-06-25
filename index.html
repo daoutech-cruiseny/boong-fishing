@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>붕어 낚시터</title>
-<meta name="description" content="입을 'O'로 벌리면 붕어가 되어 낚시! 사내 웹캠 낚시 게임" />
+<title>다우 붕어 낚시터</title>
+<meta name="description" content="입을 'O'로 벌리면 붕어가 되어 낚시! 다우 사내 웹캠 낚시 게임" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎣%3C/text%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,10 +17,15 @@
 <section id="screen-entry" class="screen is-active">
   <div class="pond-bg" aria-hidden="true">
     <span class="sun"></span>
+    <span class="pond-fish f1">🐟</span>
+    <span class="pond-fish f2">🐠</span>
+    <span class="pond-fish f3">🐡</span>
+    <span class="ripple r1"></span>
+    <span class="ripple r2"></span>
   </div>
   <div class="entry-card">
-    <div class="brand"><span class="brand-fish" aria-hidden="true"></span><h1 class="brand-name">붕어 낚시터</h1></div>
-    <p class="brand-tag">점심·쉬는시간에 즐기는 사내 웹캠 낚시터</p>
+    <div class="brand"><span class="brand-fish" aria-hidden="true"></span><h1 class="brand-name">다우 붕어 낚시터</h1></div>
+    <p class="brand-tag">점심·쉬는시간에 즐기는 다우 사내 웹캠 낚시터</p>
 
     <label class="field-label" for="nickname">닉네임</label>
     <div class="field-row">
@@ -28,12 +33,20 @@
       <span id="nick-status" class="nick-status" aria-live="polite"></span>
     </div>
 
+    <ol class="howto" aria-label="이렇게 즐겨요">
+      <li><span class="howto-emoji">😮</span><span class="howto-t">입을 <b>'O'</b>로<br>붕어 변신</span></li>
+      <li><span class="howto-emoji">🔄</span><span class="howto-t">고개 <b>휙</b><br>캐스팅</span></li>
+      <li><span class="howto-emoji">🎣</span><span class="howto-t"><b>뻐끔뻐끔</b><br>챔질!</span></li>
+    </ol>
+
+    <p class="teaser"><span class="teaser-fish">🐳 🦈 🐉 🦑 ⚡</span> 가끔 <b>대물</b>도 올라와요</p>
+
     <p class="perm-note"><span class="i-cam" aria-hidden="true"></span>낚시하려면 카메라 권한이 필요해요. 영상은 기기에서만 처리되고 저장·전송되지 않아요.</p>
 
     <button id="btn-start" class="btn btn-primary btn-block">낚시 시작</button>
     <p id="entry-error" class="entry-error" role="alert" hidden></p>
   </div>
-  <footer class="entry-foot">가짜 보상으로 즐기는 재미용 게임 · v0.1</footer>
+  <footer class="entry-foot">가짜 보상으로 즐기는 재미용 게임 · 다우테크 · v0.2</footer>
 </section>
 
 <!-- ============ CALIBRATION ============ -->
