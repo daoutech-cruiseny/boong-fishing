@@ -135,35 +135,26 @@ async function onCalNeutral() {
   if (calStage === 0) {
     $("cal-instr").textContent = "정면을 본 채로… 보정 중";
     $("btn-cal-neutral").disabled = true;
-    const ok = await face.captureNeutral(900);
+    await face.captureNeutral(900);
     $("btn-cal-neutral").disabled = false;
     $("cal-step-1").classList.add("done");
     calStage = 1;
-    $("cal-instr").textContent = "이제 입을 동그랗게 'O'로 벌려보세요";
-    $("btn-cal-neutral").textContent = "입 'O' 확인";
-    // auto-detect O for a few seconds
-    pollO();
+    $("cal-instr").textContent = "입을 크게 'O'로 벌린 채 아래 버튼을 누르세요";
+    $("btn-cal-neutral").textContent = "입 'O' 인식";
+  } else if (calStage === 1) {
+    // measure the user's real 'O' peak → thresholds adapt to their distance
+    $("cal-instr").textContent = "그대로 'O' 유지… 인식 중";
+    $("btn-cal-neutral").disabled = true;
+    const got = await face.captureO(1500);
+    $("btn-cal-neutral").disabled = false;
+    $("cal-step-2").classList.add("done");
+    calStage = 2;
+    $("cal-instr").textContent = got ? "좋아요! 이 거리에 맞게 맞췄어요 — 멀어도 OK" : "괜찮아요 — 바로 시작해도 돼요";
+    $("btn-cal-neutral").textContent = "낚시 시작";
   } else {
     enterLobby();
   }
 }
-
-function pollO() {
-  const t0 = performance.now();
-  const tick = () => {
-    if (calStage !== 1) return;
-    if (face.isO()) {
-      $("cal-step-2").classList.add("done");
-      $("cal-instr").textContent = "좋아요! 준비 끝났어요";
-      $("btn-cal-neutral").textContent = "낚시 시작";
-      calStage = 2;
-      return;
-    }
-    if (performance.now() - t0 < 6000) requestAnimationFrame(tick);
-    else { $("cal-instr").textContent = "괜찮아요 — 바로 시작해도 돼요"; $("btn-cal-neutral").textContent = "낚시 시작"; calStage = 2; }
-  };
-  tick();
-};
 
 // ---------- LOBBY ----------
 function enterLobby() {
@@ -214,7 +205,12 @@ function arm() {
   svStatus("붕어 모드 ON", true);
   $("ab-phase").textContent = "② 캐스팅";
   $("ab-hint").textContent = faceMode ? "고개를 빠르고 크게 돌렸다 정면으로!" : "스와이프하거나 버튼으로";
-  $("castpad-sub").textContent = faceMode ? "고개를 못 쓰면 휙 스와이프" : "휙 스와이프 = 멀리";
+  $("castpad-hint").textContent = faceMode
+    ? "고개를 휙 돌렸다가 → 정면으로 돌아오면 던져져요!"
+    : "화면을 휙 스와이프하세요";
+  $("castpad-sub").textContent = faceMode
+    ? "멀리(크게) 돌릴수록 더 멀리 날아가요"
+    : "세게 스와이프 = 멀리 · 또는 아래 버튼";
   $("castpad").hidden = false;
   $("ab-ctrl").innerHTML = `<button class="btn btn-ghost" id="b-soft">살짝 던지기</button>`;
   $("b-soft").onclick = () => doCast(0.18);

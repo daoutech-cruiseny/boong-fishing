@@ -83,8 +83,13 @@
 
     <!-- swipe / head-turn capture overlay (also accepts fallback) -->
     <div id="castpad" class="castpad" hidden>
-      <div class="castpad-hint">고개를 빠르고 크게 돌렸다 정면으로!</div>
-      <div class="castpad-sub" id="castpad-sub">또는 화면을 휙 스와이프</div>
+      <div class="cast-guide" aria-hidden="true">
+        <span class="cg-arrow cg-left">↩</span>
+        <span class="cg-head">🐟</span>
+        <span class="cg-arrow cg-right">↪</span>
+      </div>
+      <div class="castpad-hint" id="castpad-hint">고개를 휙 돌렸다가 → 정면으로 돌아오면 던져져요!</div>
+      <div class="castpad-sub" id="castpad-sub">멀리 돌릴수록 더 멀리 날아가요</div>
     </div>
 
     <aside class="selfview" id="selfview">

@@ -177,8 +177,31 @@ body {
 
 .castpad { position:absolute; top:48px; left:0; right:0; bottom: 96px; z-index: 15; display:flex; flex-direction:column;
   align-items:center; justify-content:center; gap:8px; background: rgba(20,70,100,.06); cursor: grab; touch-action: none; user-select:none; }
-.castpad-hint { font-size: 14px; font-weight:600; color:#15506F; background: rgba(255,255,255,.92); padding: 7px 15px; border-radius:999px; }
+.castpad[hidden] { display: none; }
+.castpad-hint { font-size: 15px; font-weight:700; color:#15506F; background: rgba(255,255,255,.95); padding: 9px 18px; border-radius:999px; box-shadow: var(--shadow-sm); }
 .castpad-sub { font-size: 12px; color:#15506F; background: rgba(255,255,255,.8); padding: 3px 11px; border-radius:999px; }
+
+/* animated demo of the cast motion: head swings out, then back to center */
+.cast-guide { display:flex; align-items:center; justify-content:center; gap: 12px;
+  background: rgba(255,255,255,.9); border-radius: 999px; padding: 12px 22px; margin-bottom: 4px; box-shadow: var(--shadow-sm); }
+.cg-head { font-size: 44px; line-height:1; display:inline-block; transform-origin: 50% 75%;
+  animation: castswing 2.2s ease-in-out infinite; }
+.cg-arrow { font-size: 24px; color:#15506F; opacity:.22; }
+.cg-left  { animation: cgGlowL 2.2s ease-in-out infinite; }
+.cg-right { animation: cgGlowR 2.2s ease-in-out infinite; }
+@keyframes castswing {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  20% { transform: translateX(-20px) rotate(-24deg); }
+  40% { transform: translateX(0) rotate(0deg); }
+  60% { transform: translateX(20px) rotate(24deg); }
+  80% { transform: translateX(0) rotate(0deg); }
+}
+@keyframes cgGlowL { 0%,100%{opacity:.2} 20%{opacity:1} 45%{opacity:.2} }
+@keyframes cgGlowR { 0%,100%{opacity:.2} 60%{opacity:1} 85%{opacity:.2} }
+@media (prefers-reduced-motion: reduce) {
+  .cg-head, .cg-left, .cg-right { animation: none; }
+  .cg-arrow { opacity:.7; }
+}
 
 .selfview { position:absolute; bottom: 110px; left: 12px; width: 126px; height: 102px; background: rgba(255,255,255,.93);
   border:1px solid var(--line); border-radius: 14px; overflow:hidden; z-index: 12; }

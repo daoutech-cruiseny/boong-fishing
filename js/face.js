@@ -25,6 +25,7 @@ export class FaceTracker {
     this.baseline = { jawOpen: 0.04, funnel: 0.02, pucker: 0.02, yaw: 0 };
     this.sensitivity = "normal";
     this.th = { open: 0.22, funnel: 0.12, pucker: 0.22 };
+    this.openRef = null;          // captured peak of the user's 'O' (set during calibration)
     this.onframe = null;          // (metrics) => void
     this._raw = { jawOpen: 0, funnel: 0, pucker: 0, yaw: 0 };
     this._landmarker = null;
@@ -40,18 +41,34 @@ export class FaceTracker {
   }
   _recalcTh() {
     const d = SENS[this.sensitivity];
-    this.th = {
-      open:   this.baseline.jawOpen + d.open,
-      funnel: this.baseline.funnel + d.funnel,
-      pucker: this.baseline.pucker + d.pucker,
-    };
+    if (this.openRef) {
+      // Adaptive: place the threshold a fraction of the way from the neutral
+      // baseline to the user's actual 'O' peak. Because both are measured at the
+      // user's real distance, detection no longer depends on sitting close.
+      const frac = { low: 0.62, normal: 0.46, high: 0.34 }[this.sensitivity] || 0.46;
+      const lerp = (base, peak, floor) =>
+        Math.max(base + floor, base + Math.max(0, peak - base) * frac);
+      this.th = {
+        open:   lerp(this.baseline.jawOpen, this.openRef.jawOpen, 0.05),
+        funnel: lerp(this.baseline.funnel,  this.openRef.funnel,  0.025),
+        pucker: this.baseline.pucker + d.pucker,
+      };
+    } else {
+      this.th = {
+        open:   this.baseline.jawOpen + d.open,
+        funnel: this.baseline.funnel + d.funnel,
+        pucker: this.baseline.pucker + d.pucker,
+      };
+    }
   }
 
   async init(videoEl) {
     this._video = videoEl;
     // 1) camera (throws if denied/unavailable)
+    // Higher capture resolution gives the landmarker more pixels on a distant
+    // face, so blendshapes (jawOpen/funnel/pucker) stay reliable from farther away.
     this._stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
       audio: false,
     });
     videoEl.srcObject = this._stream;
@@ -126,6 +143,7 @@ export class FaceTracker {
 
   // average raw metrics over `ms` to set the neutral baseline
   captureNeutral(ms = 900) {
+    this.openRef = null;          // re-measure the 'O' after a fresh neutral
     return new Promise((resolve) => {
       const samples = [];
       const t0 = performance.now();
@@ -138,6 +156,28 @@ export class FaceTracker {
           this._recalcTh();
         }
         resolve(samples.length > 0);
+      };
+      grab();
+    });
+  }
+
+  // record the peak of an 'O' over `ms` and derive distance-adaptive thresholds
+  captureO(ms = 1500) {
+    return new Promise((resolve) => {
+      const peak = { jawOpen: 0, funnel: 0 };
+      let sawFace = false;
+      const t0 = performance.now();
+      const grab = () => {
+        if (this.faceFound) {
+          sawFace = true;
+          peak.jawOpen = Math.max(peak.jawOpen, this._raw.jawOpen);
+          peak.funnel  = Math.max(peak.funnel,  this._raw.funnel);
+        }
+        if (performance.now() - t0 < ms) { requestAnimationFrame(grab); return; }
+        // only trust it if the mouth clearly opened past the neutral baseline
+        const opened = sawFace && (peak.jawOpen - this.baseline.jawOpen) > 0.05;
+        if (opened) { this.openRef = peak; this._recalcTh(); }
+        resolve(opened);
       };
       grab();
     });
