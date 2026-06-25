@@ -173,6 +173,48 @@ body {
 .mybob-alert { position:absolute; top:-30px; left:50%; transform:translateX(-50%); width:22px; height:22px; border-radius:50%;
   background: var(--coral); color:#fff; display:none; align-items:center; justify-content:center; font-weight:700; font-size:14px; }
 .mybob.is-bite .mybob-alert { display:flex; }
+
+/* fishing line: runs from the float up to an (off-screen) rod tip */
+.mybob-line { position:absolute; left:50%; bottom:6px; width:2px; height:90vh; z-index:-1;
+  background: linear-gradient(to top, rgba(255,255,255,.9), rgba(255,255,255,.12));
+  transform: translateX(-50%); transform-origin: bottom center; pointer-events:none; }
+.mybob.casting .mybob-line { animation: lineWhip .5s ease-out; }
+@keyframes lineWhip {
+  0%   { transform: translateX(-50%) scaleY(.15); opacity:.25; }
+  55%  { opacity:1; }
+  100% { transform: translateX(-50%) scaleY(1); opacity:1; }
+}
+
+/* ---------- catch breach (creature rises out of the water) ---------- */
+.catch-stage { position:absolute; inset:0; z-index: 20; pointer-events:none; }
+.catch-stage[hidden] { display:none; }
+.catch-creature { position:absolute; left:50%; transform: translate(-50%,0);
+  font-size: 66px; line-height:1; filter: drop-shadow(0 6px 10px rgba(0,0,0,.28));
+  animation: catchRise 1.5s cubic-bezier(.2,.85,.25,1) forwards; }
+.catch-creature.big { font-size: 122px; animation-duration: 1.7s; }
+@keyframes catchRise {
+  0%   { transform: translate(-50%, 64px) scale(.35) rotate(-8deg); opacity:0; }
+  22%  { opacity:1; }
+  55%  { transform: translate(-50%, -40px) scale(1.12) rotate(5deg); }
+  72%  { transform: translate(-50%, -18px) scale(1) rotate(-3deg); }
+  100% { transform: translate(-50%, -26px) scale(1) rotate(0); opacity:1; }
+}
+.splash { position:absolute; left:50%; transform: translate(-50%,-50%); width:24px; height:24px; }
+.splash::before, .splash::after { content:""; position:absolute; left:50%; top:50%;
+  border:3px solid rgba(255,255,255,.9); border-radius:50%; transform: translate(-50%,-50%);
+  animation: splashRing .7s ease-out forwards; }
+.splash::after { animation-delay:.12s; border-color: rgba(156,200,230,.85); }
+@keyframes splashRing { 0%{width:6px;height:6px;opacity:.95} 100%{width:96px;height:96px;opacity:0} }
+.drop { position:absolute; left:50%; top:0; width:7px; height:7px; border-radius:50%;
+  background: rgba(214,236,255,.95); animation: dropFly .7s ease-out forwards; }
+@keyframes dropFly {
+  0%   { transform: translate(-50%,0) scale(1); opacity:1; }
+  100% { transform: translate(calc(-50% + var(--dx)), var(--dy)) scale(.35); opacity:0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .catch-creature { animation: none; transform: translate(-50%,-26px); }
+  .splash, .drop, .mybob.casting .mybob-line { animation: none; }
+}
 @keyframes bobshake { 0%,100%{transform:translate(-50%,-50%)} 25%{transform:translate(-54%,-50%)} 75%{transform:translate(-46%,-50%)} }
 
 .castpad { position:absolute; top:48px; left:0; right:0; bottom: 96px; z-index: 15; display:flex; flex-direction:column;

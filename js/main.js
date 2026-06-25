@@ -188,10 +188,32 @@ function setBob(show) {
   const b = $("mybob"); b.hidden = !show; if (!show) b.classList.remove("is-bite");
 }
 
+// creature/trophy breaches the water at the bob, with a splash and droplets
+function showCatchReveal(item) {
+  const stage = $("catch-stage"); if (!stage) return;
+  const bobTop = parseFloat($("mybob").style.top) || 60;   // % down the scene
+  const big = !!item.big;
+  let drops = "";
+  for (let i = 0; i < 7; i++) {
+    const dx = Math.round(Math.random() * 120 - 60);
+    const dy = Math.round(-30 - Math.random() * 55);
+    const delay = (Math.random() * 0.15).toFixed(2);
+    drops += `<span class="drop" style="--dx:${dx}px;--dy:${dy}px;animation-delay:${delay}s"></span>`;
+  }
+  stage.innerHTML =
+    `<div class="splash" style="top:${bobTop}%"></div>
+     <div style="position:absolute;left:50%;top:${bobTop}%">${drops}</div>
+     <div class="catch-creature ${big ? "big" : ""}" style="top:${bobTop}%">${item.icon}</div>`;
+  stage.hidden = false;
+  clearTimeout(stage._t);
+  stage._t = setTimeout(() => { stage.hidden = true; stage.innerHTML = ""; }, big ? 2400 : 2000);
+}
+
 function toReady() {
   clearTimers(); L.state = "ready"; L.oHold = 0; L.peakAmp = 0; L.peakSpeed = 0; L.winding = false;
   setBob(false); $("mybob").style.transition = "none"; $("mybob").style.top = "70%";
   $("castpad").hidden = true;
+  const cs = $("catch-stage"); if (cs) { cs.hidden = true; cs.innerHTML = ""; }
   svStatus("대기 중", faceMode);
   $("ab-phase").textContent = "① 준비";
   $("ab-hint").textContent = faceMode ? "입을 'O'로 벌리면 붕어 모드!" : "버튼/스페이스로 진행";
@@ -223,6 +245,7 @@ function doCast(power) {
   const landing = 70 - power * 22;
   const b = $("mybob");
   b.style.transition = "none"; b.style.top = "70%"; setBob(true);
+  b.classList.add("casting"); setTimeout(() => b.classList.remove("casting"), 520);
   requestAnimationFrame(() => { b.style.transition = "top .55s ease"; b.style.top = landing + "%"; });
   const diff = hookDifficulty(power, settings.difficultyMult);
   L.tapsNeeded = diff.tapsNeeded; L._window = diff.timeWindow;
@@ -268,6 +291,7 @@ function caught() {
   $("mybob").classList.remove("is-bite");
   const item = pickItem(L.power);
   const { isNewBest } = store.addCatch(item);
+  showCatchReveal(item);
   refreshChips(); renderMiniRank();
   svStatus("획득!", true);
   $("ab-phase").textContent = "✦ 획득!";
