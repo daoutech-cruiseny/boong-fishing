@@ -211,3 +211,43 @@ export class Store {
 export const QUOTE = BEST_QUOTE;
 export function tierOf(id) { const it = ITEM_BY_ID[id]; return it ? it.tier : "junk"; }
 export function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+// ---- all-time cumulative leaderboard (persisted in localStorage, keyed by nickname) ----
+const LB_KEY = "boong.leaderboard.v1";
+const NAME_ICON = Object.fromEntries(ITEMS.map((i) => [i.name, i.icon]));
+function lbLoad() { try { return JSON.parse(localStorage.getItem(LB_KEY)) || {}; } catch (e) { return {}; } }
+function lbSave(m) { try { localStorage.setItem(LB_KEY, JSON.stringify(m)); } catch (e) {} }
+const rankOf = (tier) => (TIERS[tier] ? TIERS[tier].rank : -1);
+
+// record a nickname's best-ever score + highest-tier trophy
+export function lbRecord(nick, score, best) {
+  if (!nick) return;
+  const m = lbLoad();
+  const cur = m[nick] || { score: 0, tier: null, name: "", icon: "" };
+  if ((score || 0) > cur.score) cur.score = score || 0;
+  if (best && best.tier && rankOf(best.tier) > rankOf(cur.tier)) {
+    cur.tier = best.tier;
+    cur.name = best.name || "";
+    cur.icon = best.icon || NAME_ICON[best.name] || "🐟";
+  }
+  m[nick] = cur; lbSave(m);
+}
+// seed the board once with the NPC roster so it's never empty
+export function lbSeed(npcs) {
+  const m = lbLoad(); let changed = false;
+  for (const n of npcs || []) {
+    if (!m[n.nick]) { m[n.nick] = { score: n.score, tier: n.tier, name: n.trophy, icon: NAME_ICON[n.trophy] || "🐟" }; changed = true; }
+  }
+  if (changed) lbSave(m);
+}
+export function lbTop(limit = 8) {
+  return Object.entries(lbLoad())
+    .map(([nick, v]) => ({ nick, score: v.score || 0, tier: v.tier, name: v.name, icon: v.icon }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
+export function lbRank(nick) {
+  const all = Object.entries(lbLoad()).map(([n, v]) => ({ nick: n, score: v.score || 0 })).sort((a, b) => b.score - a.score);
+  const i = all.findIndex((e) => e.nick === nick);
+  return i < 0 ? all.length + 1 : i + 1;
+}

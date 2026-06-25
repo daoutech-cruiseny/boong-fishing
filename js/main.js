@@ -2,7 +2,7 @@
 import { FaceTracker } from "./face.js";
 import {
   Store, ITEMS, TIERS, pickItem, hookDifficulty, castPowerFromYaw,
-  depthLabel, QUOTE, clamp,
+  depthLabel, QUOTE, clamp, lbRecord, lbSeed, lbTop, lbRank,
 } from "./game.js";
 import { Pond } from "./net.js";
 
@@ -222,7 +222,8 @@ function enterLobby() {
   if (!faceMode) { const sv = $("selfview-status"); sv.classList.add("off"); sv.innerHTML = '<span class="sv-dot"></span>버튼 모드'; }
   renderNpcs();
   refreshChips();
-  renderMiniRank();
+  lbSeed(store.npcs);
+  renderRank();
   bindLobbyControls();
   toReady();
   startNpcLoop();
@@ -260,31 +261,42 @@ function renderPresence(users) {
       <span class="player-stat st-wait">낚시 중</span>`;
     wrap.appendChild(el);
   });
-  renderLiveRank(netUsers);
+  renderRank();
 }
-// live leaderboard from presence: TOP3 + full online list (top-right)
-function renderLiveRank(users) {
-  const list = (users || []).map((u) => ({ ...u }));
-  list.forEach((u) => { if (u.nick === store.nickname) u.score = Math.max(u.score || 0, store.score()); });
-  list.sort((a, b) => (b.score || 0) - (a.score || 0));
-  const myIdx = list.findIndex((u) => u.nick === store.nickname);
+// my best trophy as a plain object for the leaderboard
+function myBestTrophy() {
+  const b = store.bestTrophy();
+  return b ? { name: b.name, icon: b.icon, tier: b.tier } : null;
+}
+// all-time cumulative ranking (nickname · score · trophy), 2 lines for legend holders
+function renderRank() {
+  // fold the latest data into the persisted board
+  lbRecord(store.nickname, store.score(), myBestTrophy());
+  netUsers.forEach((u) => lbRecord(u.nick, u.score, u.best));
+  const online = new Set(netUsers.map((u) => u.nick)); online.add(store.nickname);
   const medals = ["🥇", "🥈", "🥉"];
-  const row = (u, badge, me) =>
-    `<div class="mr-row ${me ? "me" : ""}"><span class="mr-no">${badge}</span>
-       <span class="mr-nick">${escapeHtml(u.nick)}</span><span class="mr-score">${u.score || 0}</span></div>`;
-  const top = list.slice(0, 3).map((u, i) => row(u, medals[i] || i + 1, u.nick === store.nickname)).join("");
-  const rest = list.slice(3).map((u, i) => row(u, i + 4, u.nick === store.nickname)).join("");
+  const card = (e, i) => {
+    const me = e.nick === store.nickname;
+    const on = online.has(e.nick);
+    const legend = e.tier === "legend";
+    const line2 = legend
+      ? `<div class="mr-trophy"><span class="mr-tro-ic">${e.icon || "🏆"}</span>
+           <span class="mr-tro-nm">${escapeHtml(e.name || "전설 전리품")}</span>
+           <span class="rar rar-legend">전설</span></div>`
+      : "";
+    return `<div class="mr-card ${me ? "me" : ""} ${legend ? "legend" : ""}">
+      <div class="mr-line1"><span class="mr-no">${medals[i] || i + 1}</span>
+        <span class="mr-nick">${on ? '<span class="mr-on">●</span>' : ""}${escapeHtml(e.nick)}</span>
+        ${e.icon && !legend ? `<span class="mr-tro">${e.icon}</span>` : ""}
+        <span class="mr-score">${e.score}</span></div>${line2}</div>`;
+  };
   $("mini-rank").innerHTML =
-    `<h4>🎣 실시간 낚시터 · <b>${list.length}명</b></h4>
-     <div class="mr-section">TOP 3</div>${top}
-     ${rest ? `<div class="mr-section">전체 접속자</div><div class="mr-all">${rest}</div>` : ""}
-     <div class="mr-me-row"><span class="mr-me-label">나 · ${myIdx + 1}위</span>
+    `<h4>🏆 역대 누적 랭킹 <b>· 🟢 ${netUsers.length || 1}</b></h4>` +
+    `<div class="mr-list">${lbTop(8).map(card).join("")}</div>` +
+    `<div class="mr-me-row"><span class="mr-me-label">나 · ${lbRank(store.nickname)}위</span>
        <span class="mr-me-stat"><b>${store.score()}</b>점 · 🐟${store.totalCaught()}</span></div>`;
 }
-function refreshRank() {
-  if (pond && pond.enabled) renderLiveRank(netUsers);
-  else renderMiniRank();
-}
+const refreshRank = renderRank;
 // big "OOO님이 ㅁㅁㅁ 획득!" banner beside the ranking
 function showCatchBanner(nick, name, icon, tier, tierLabel) {
   const el = $("catch-banner"); if (!el) return;
@@ -503,7 +515,7 @@ function caught() {
   blip(523, 0.09); setTimeout(() => blip(659, 0.09), 90); setTimeout(() => blip(784, 0.12), 180);
   showCatchBanner(store.nickname, item.name, item.icon, item.tier, t.label);
   if (document.hidden) showNotify("🎉 낚았어요!", `${t.label} ${item.name} 획득!`, "catch");
-  if (pond) { pond.broadcastCatch({ nick: store.nickname, itemName: item.name, tierLabel: t.label, tier: item.tier, icon: item.icon }); pond.updateState({ score: store.score(), best: t.label }); }
+  if (pond) { pond.broadcastCatch({ nick: store.nickname, itemName: item.name, tierLabel: t.label, tier: item.tier, icon: item.icon }); pond.updateState({ score: store.score(), best: myBestTrophy() }); }
   // auto-continue to the next cast — no button needed
   L._nextT = setTimeout(() => { if (L.state === "caught") toReady(); }, 2700);
 }
@@ -633,25 +645,6 @@ function showToast(msg) {
   if (toastT) clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("show"), 2600);
 }
 
-function renderMiniRank() {
-  const { rows, myRank } = store.ranking();
-  const medals = ["🥇", "🥈", "🥉"];
-  const top = rows.slice(0, 3).map((r, i) => {
-    const t = TIERS[r.tier];
-    return `<div class="mr-row ${r.me ? "me" : ""}">
-      <span class="mr-no">${medals[i] || i + 1}</span>
-      <span class="mr-nick">${escapeHtml(r.nick)}</span>
-      <span class="mr-dot" style="background:${t.dot}"></span>
-      <span class="mr-score">${r.score}</span></div>`;
-  }).join("");
-  $("mini-rank").innerHTML =
-    `<h4>🎣 실시간 낚시터 현황</h4>${top}
-     <div class="mr-me-row">
-       <span class="mr-me-label">나 · ${myRank}위</span>
-       <span class="mr-me-stat"><b>${store.score()}</b>점 · 🐟${store.totalCaught()}</span>
-     </div>`;
-}
-
 // ---------- MODALS ----------
 function openModal(id) { $(id).hidden = false; }
 function closeModal(id) { $(id).hidden = true; }
@@ -763,7 +756,7 @@ function openSettings() {
   });
   $("set-recal").onclick = () => { closeModal("panel-settings"); restartCalibration(); };
   $("set-clear").onclick = () => {
-    if (confirm("어항을 비울까요? 되돌릴 수 없어요.")) { store.inventory = {}; store.best = null; store._save(); refreshChips(); renderMiniRank(); openSettings(); }
+    if (confirm("어항을 비울까요? 되돌릴 수 없어요.")) { store.inventory = {}; store.best = null; store._save(); refreshChips(); renderRank(); openSettings(); }
   };
   openModal("panel-settings");
 }

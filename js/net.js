@@ -41,7 +41,7 @@ export class Pond {
         const state = ch.presenceState();
         const users = Object.entries(state).map(([key, metas]) => {
           const m = (metas && metas[0]) || {};
-          return { nick: m.nick || key, since: m.since || 0, score: m.score || 0, best: m.best || "" };
+          return { nick: m.nick || key, since: m.since || 0, score: m.score || 0, best: m.best || null };
         });
         if (this.onPresence) this.onPresence(users);
       });
