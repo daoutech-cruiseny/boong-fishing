@@ -28,8 +28,10 @@ export class Pond {
         realtime: { params: { eventsPerSecond: 5 } },
       });
 
+      // unique per-session key so two people with the same nickname both show
+      this._key = nick + "#" + Math.random().toString(36).slice(2, 8);
       const ch = this._client.channel("pond:" + this.room, {
-        config: { presence: { key: nick } },
+        config: { presence: { key: this._key }, broadcast: { self: false } },
       });
 
       ch.on("presence", { event: "sync" }, () => {
