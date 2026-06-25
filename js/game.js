@@ -57,7 +57,10 @@ export function depthLabel(power) {
 export function hookDifficulty(power, globalMult = 1) {
   const tapsNeeded = Math.max(3, Math.round((4 + power * 4) * globalMult));
   const timeWindow = clamp(4.6 - power * 2.1, 2.4, 4.6);
-  const biteDelay = clamp(2400 - power * 1400, 700, 2400);
+  // Long, unpredictable wait so a cast builds real anticipation: you can walk
+  // away and get pinged when it bites. Deeper casts bite sooner. (ms)
+  const baseWait = 28000 - power * 18000;                 // ~28s shallow → ~10s deep
+  const biteDelay = clamp(baseWait * (0.6 + Math.random() * 0.8), 5000, 45000);
   return { tapsNeeded, timeWindow, biteDelay };
 }
 

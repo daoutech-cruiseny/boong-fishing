@@ -261,6 +261,19 @@ body {
 .ab-hint { font-size: 12px; color: var(--muted); text-align:right; }
 .ab-ctrl { }
 .ab-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
+/* face-mode live guidance (replaces the click buttons during a cast/hook) */
+.guide-live { display:flex; align-items:center; gap:10px; }
+.gl-emoji { font-size: 26px; line-height:1; flex:none; animation: glPulse 1.2s ease-in-out infinite; }
+.gl-text { font-size: 14px; color: var(--ink); line-height:1.35; }
+.gl-text b { color: var(--coral-strong, #C0392B); }
+.gl-gauge { flex:none; width: 84px; height: 12px; }
+.gl-gauge .gauge-fill, .cast-fill { background: var(--coral); }
+@keyframes glPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.18)} }
+.wait-box { display:flex; align-items:center; gap:10px; }
+.wait-rod { font-size: 24px; line-height:1; flex:none; animation: waitBob 1.8s ease-in-out infinite; }
+@keyframes waitBob { 0%,100%{transform:translateY(0) rotate(-6deg)} 50%{transform:translateY(-3px) rotate(6deg)} }
+@media (prefers-reduced-motion: reduce) { .gl-emoji, .wait-rod { animation: none; } }
 .gauge { height: 14px; border-radius:999px; background:#E6E3DB; overflow:hidden; }
 .gauge-fill { height:100%; width:0%; background: var(--common-dot); transition: width .12s ease; border-radius:999px; }
 .timer { font-size: 13px; color:#9A4A0E; font-weight:600; }

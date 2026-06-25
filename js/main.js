@@ -11,7 +11,29 @@ const $ = (id) => document.getElementById(id);
 let store = null;
 let face = null;
 let faceMode = false;            // true once camera + model are live
-const settings = { sensitivity: "normal", difficultyMult: 1, sfx: true, bgm: false };
+const settings = { sensitivity: "normal", difficultyMult: 1, sfx: true, bgm: false, notify: false };
+const NOTIFY_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎣%3C/text%3E%3C/svg%3E";
+
+// ---------- browser notifications (fire while the tab is in the background) ----------
+async function enableNotify() {
+  if (!("Notification" in window)) { showToast("이 브라우저는 알림을 지원하지 않아요"); return false; }
+  try {
+    const p = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+    settings.notify = (p === "granted");
+    if (settings.notify) { showToast("입질 알림을 켰어요 🔔"); const b = $("b-notify"); if (b) b.remove(); }
+    else showToast("알림이 막혀 있어요 — 브라우저 주소창의 알림 설정에서 허용해 주세요");
+  } catch (e) { /* ignore */ }
+  return settings.notify;
+}
+async function showNotify(title, body, tag) {
+  if (!settings.notify || !("Notification" in window) || Notification.permission !== "granted") return;
+  const opts = { body, tag: tag || "boong", icon: NOTIFY_ICON, badge: NOTIFY_ICON, renotify: true };
+  try {
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if (reg && reg.showNotification) await reg.showNotification(title, opts);
+    else new Notification(title, opts);
+  } catch (e) { try { new Notification(title, { body }); } catch (_) {} }
+}
 
 // lobby game state machine
 const L = {
@@ -216,9 +238,17 @@ function toReady() {
   const cs = $("catch-stage"); if (cs) { cs.hidden = true; cs.innerHTML = ""; }
   svStatus("대기 중", faceMode);
   $("ab-phase").textContent = "① 준비";
-  $("ab-hint").textContent = faceMode ? "입을 'O'로 벌리면 붕어 모드!" : "버튼/스페이스로 진행";
-  $("ab-ctrl").innerHTML = `<button class="btn btn-primary" id="b-arm">붕어 모드 ON</button>`;
-  $("b-arm").onclick = arm;
+  if (faceMode) {
+    $("ab-hint").textContent = "화면을 보고 따라하기만 하면 돼요";
+    $("ab-ctrl").innerHTML =
+      `<div class="guide-live"><span class="gl-emoji">😮</span>
+        <span class="gl-text">입을 동그랗게 <b>'O'</b>로 벌리면 붕어 모드 시작!</span>
+        <span class="gauge gl-gauge"><span class="gauge-fill" id="arm-fill"></span></span></div>`;
+  } else {
+    $("ab-hint").textContent = "버튼/스페이스로 진행";
+    $("ab-ctrl").innerHTML = `<button class="btn btn-primary" id="b-arm">붕어 모드 ON</button>`;
+    $("b-arm").onclick = arm;
+  }
 }
 
 function arm() {
@@ -234,8 +264,15 @@ function arm() {
     ? "멀리(크게) 돌릴수록 더 멀리 날아가요"
     : "세게 스와이프 = 멀리 · 또는 아래 버튼";
   $("castpad").hidden = false;
-  $("ab-ctrl").innerHTML = `<button class="btn btn-ghost" id="b-soft">살짝 던지기</button>`;
-  $("b-soft").onclick = () => doCast(0.18);
+  if (faceMode) {
+    $("ab-ctrl").innerHTML =
+      `<div class="guide-live"><span class="gl-emoji">🔄</span>
+        <span class="gl-text">고개를 <b>휙</b> 돌렸다가 <b>정면</b>으로! (멀리 돌릴수록 멀리)</span>
+        <span class="gauge gl-gauge"><span class="gauge-fill cast-fill" id="cast-fill"></span></span></div>`;
+  } else {
+    $("ab-ctrl").innerHTML = `<button class="btn btn-ghost" id="b-soft">살짝 던지기</button>`;
+    $("b-soft").onclick = () => doCast(0.18);
+  }
 }
 
 function doCast(power) {
@@ -251,8 +288,13 @@ function doCast(power) {
   L.tapsNeeded = diff.tapsNeeded; L._window = diff.timeWindow;
   $("ab-phase").textContent = "③ 대기";
   $("ab-hint").textContent = `비거리 ${Math.round(power * 100)} · ${depthLabel(power)}`;
-  $("ab-ctrl").innerHTML = `<span class="ab-hint">찌를 보며 입질을 기다리는 중…</span>`;
-  svStatus("대기 중", true);
+  const needAsk = ("Notification" in window) && Notification.permission === "default";
+  $("ab-ctrl").innerHTML =
+    `<div class="wait-box"><span class="wait-rod">🎣</span>
+       <span class="gl-text">찌를 던졌어요! <b>다른 일 하셔도 돼요</b> — 입질이 오면 알려드릴게요.</span></div>` +
+    (needAsk ? `<button class="btn btn-ghost" id="b-notify">🔔 입질 알림 받기</button>` : ``);
+  if (needAsk) { const bn = $("b-notify"); if (bn) bn.onclick = enableNotify; }
+  svStatus("입질 대기 중…", true);
   blip(330, 0.12, "triangle");
   L.biteTimer = setTimeout(bite, diff.biteDelay);
 }
@@ -264,10 +306,14 @@ function bite() {
   svStatus("입질!", true);
   $("ab-phase").textContent = "④ 챔질!";
   $("ab-hint").textContent = `뻐끔뻐끔! ${L.tapsNeeded}회 빠르게!`;
+  const head = faceMode
+    ? `<span class="gl-text" style="flex:1">입을 <b>오므렸다(뻐끔)</b> <b>벌렸다</b> 반복!</span>`
+    : `<button class="btn btn-tap" id="b-tap">뻐끔!</button>`;
   $("ab-ctrl").innerHTML =
-    `<div class="ab-row"><button class="btn btn-tap" id="b-tap">뻐끔!</button><span class="timer" id="tm">${L.timeLeft.toFixed(1)}초</span></div>
+    `<div class="ab-row">${head}<span class="timer" id="tm">${L.timeLeft.toFixed(1)}초</span></div>
      <div class="ab-row"><div class="gauge" style="flex:1"><div class="gauge-fill" id="gf"></div></div><span class="tapn" id="tapn">0/${L.tapsNeeded}회</span></div>`;
-  $("b-tap").onclick = hookTap;
+  if (!faceMode) { const bt = $("b-tap"); if (bt) bt.onclick = hookTap; }
+  if (document.hidden) showNotify("🎣 입질이 왔어요!", `${store.nickname}님, 지금 챔질하세요!`, "bite");
   blip(520, 0.1, "square");
   L.timer = setInterval(() => {
     L.timeLeft -= 0.1;
@@ -304,6 +350,7 @@ function caught() {
   $("b-again").onclick = toReady;
   // celebratory sound
   blip(523, 0.09); setTimeout(() => blip(659, 0.09), 90); setTimeout(() => blip(784, 0.12), 180);
+  if (document.hidden) showNotify("🎉 낚았어요!", `${t.label} ${item.name} 획득!`, "catch");
   if (t.rank >= 3) showToast(`${store.nickname}님이 ${t.label} ${item.name}을(를) 낚았어요!`);
 }
 
@@ -333,11 +380,13 @@ function onFaceFrame(m) {
   if (L.state === "ready") {
     if (face.isO()) { L.oHold += dt; if (L.oHold > 0.4) arm(); }
     else L.oHold = Math.max(0, L.oHold - dt);
+    const f = $("arm-fill"); if (f) f.style.width = clamp(L.oHold / 0.4, 0, 1) * 100 + "%";
   } else if (L.state === "armed") {
     const yaw = m.yaw;
     const speed = Math.abs(yaw - L.lastYaw) / dt;
     L.lastYaw = yaw;
     if (Math.abs(yaw) > 0.045) { L.winding = true; L.peakAmp = Math.max(L.peakAmp, Math.abs(yaw)); L.peakSpeed = Math.max(L.peakSpeed, speed); }
+    const cf = $("cast-fill"); if (cf) cf.style.width = clamp(Math.abs(yaw) / 0.12, 0, 1) * 100 + "%"; // 0.12 = AMP_MAX
     if (L.winding && Math.abs(yaw) < 0.02) { doCast(castPowerFromYaw(L.peakAmp, L.peakSpeed)); }
   } else if (L.state === "bite") {
     if (face.isPucker()) L.cycleArmed = true;
@@ -522,6 +571,7 @@ function openSettings() {
     <div class="sg"><p class="sg-title">게임</p>
       <div class="srow"><div><div class="lbl">챔질 난이도</div><div class="sub">비거리 보정에 더해 적용</div></div>
         ${seg("difficulty", String(settings.difficultyMult), [["0.7", "느슨"], ["1", "보통"], ["1.3", "빡빡"]])}</div>
+      <div class="srow"><div><div class="lbl">입질 알림</div><div class="sub">자리를 비워도 입질·획득 시 브라우저 알림</div></div>${sw("notify", settings.notify)}</div>
       <div class="srow"><div class="lbl">효과음</div>${sw("sfx", settings.sfx)}</div>
       <div class="srow"><div class="lbl">배경음</div>${sw("bgm", settings.bgm)}</div>
     </div>
@@ -536,8 +586,10 @@ function openSettings() {
     if (name === "difficulty") settings.difficultyMult = parseFloat(val);
     openSettings();
   });
-  body.querySelectorAll("[data-toggle]").forEach((b) => b.onclick = () => {
-    const name = b.dataset.toggle; settings[name] = !settings[name]; if (name === "sfx" && settings.sfx) blip(660, 0.07); openSettings();
+  body.querySelectorAll("[data-toggle]").forEach((b) => b.onclick = async () => {
+    const name = b.dataset.toggle;
+    if (name === "notify") { if (settings.notify) settings.notify = false; else await enableNotify(); openSettings(); return; }
+    settings[name] = !settings[name]; if (name === "sfx" && settings.sfx) blip(660, 0.07); openSettings();
   });
   $("set-recal").onclick = () => { closeModal("panel-settings"); calStage = 0; $("cal-step-1").classList.remove("done"); $("cal-step-2").classList.remove("done"); $("btn-cal-neutral").textContent = "정면 보정 시작"; showScreen("screen-cal"); };
   $("set-clear").onclick = () => {
@@ -547,4 +599,6 @@ function openSettings() {
 }
 
 // ---------- boot ----------
+if ("Notification" in window && Notification.permission === "granted") settings.notify = true;
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
 initEntry();
