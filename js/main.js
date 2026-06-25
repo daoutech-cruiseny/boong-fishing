@@ -14,7 +14,7 @@ let face = null;
 let faceMode = false;            // true once camera + model are live
 let pond = null;                 // realtime presence/broadcast (null until lobby)
 let netUsers = [];               // live roster from Supabase presence
-const settings = { sensitivity: "normal", difficultyMult: 1, sfx: true, bgm: false, notify: false };
+const settings = { sensitivity: "high", difficultyMult: 1, sfx: true, bgm: false, notify: false };
 const NOTIFY_ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎣%3C/text%3E%3C/svg%3E";
 
 // ---------- browser notifications (fire while the tab is in the background) ----------
@@ -260,12 +260,47 @@ function renderPresence(users) {
       <span class="player-stat st-wait">낚시 중</span>`;
     wrap.appendChild(el);
   });
+  renderLiveRank(netUsers);
+}
+// live leaderboard from presence: TOP3 + full online list (top-right)
+function renderLiveRank(users) {
+  const list = (users || []).map((u) => ({ ...u }));
+  list.forEach((u) => { if (u.nick === store.nickname) u.score = Math.max(u.score || 0, store.score()); });
+  list.sort((a, b) => (b.score || 0) - (a.score || 0));
+  const myIdx = list.findIndex((u) => u.nick === store.nickname);
+  const medals = ["🥇", "🥈", "🥉"];
+  const row = (u, badge, me) =>
+    `<div class="mr-row ${me ? "me" : ""}"><span class="mr-no">${badge}</span>
+       <span class="mr-nick">${escapeHtml(u.nick)}</span><span class="mr-score">${u.score || 0}</span></div>`;
+  const top = list.slice(0, 3).map((u, i) => row(u, medals[i] || i + 1, u.nick === store.nickname)).join("");
+  const rest = list.slice(3).map((u, i) => row(u, i + 4, u.nick === store.nickname)).join("");
+  $("mini-rank").innerHTML =
+    `<h4>🎣 실시간 낚시터 · <b>${list.length}명</b></h4>
+     <div class="mr-section">TOP 3</div>${top}
+     ${rest ? `<div class="mr-section">전체 접속자</div><div class="mr-all">${rest}</div>` : ""}
+     <div class="mr-me-row"><span class="mr-me-label">나 · ${myIdx + 1}위</span>
+       <span class="mr-me-stat"><b>${store.score()}</b>점 · 🐟${store.totalCaught()}</span></div>`;
+}
+function refreshRank() {
+  if (pond && pond.enabled) renderLiveRank(netUsers);
+  else renderMiniRank();
+}
+// big "OOO님이 ㅁㅁㅁ 획득!" banner beside the ranking
+function showCatchBanner(nick, name, icon, tier, tierLabel) {
+  const el = $("catch-banner"); if (!el) return;
+  const cls = (TIERS[tier] && TIERS[tier].cls) || "common";
+  const label = tierLabel || (TIERS[tier] && TIERS[tier].label) || "";
+  el.className = "catch-banner show" + (tier === "legend" || tier === "epic" ? " hot" : "");
+  el.innerHTML =
+    `<span class="cb-icon">${icon || "🎣"}</span>
+     <span class="cb-text"><b>${escapeHtml(nick)}</b>님이 ${escapeHtml(name)} 획득! <span class="rar rar-${cls}">${label}</span></span>`;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove("show"), 3800);
 }
 function onRemoteCatch(p) {
   if (!p || p.nick === store.nickname) return;
+  showCatchBanner(p.nick, p.itemName || "무언가", p.icon, p.tier, p.tierLabel);
   const label = p.tierLabel ? p.tierLabel + " " : "";
-  const icon = p.icon ? p.icon + " " : "";
-  showToast(`${p.nick}님이 ${icon}${label}${p.itemName || "무언가"}을(를) 낚았어요!`);
   if (document.hidden) showNotify("🎣 누가 낚았어요!", `${p.nick}: ${label}${p.itemName || ""}`, "remote-catch");
 }
 
@@ -283,6 +318,8 @@ function svStatus(text, on = true) {
 function clearTimers() {
   if (L.timer) { clearInterval(L.timer); L.timer = null; }
   if (L.biteTimer) { clearTimeout(L.biteTimer); L.biteTimer = null; }
+  if (L._nextT) { clearTimeout(L._nextT); L._nextT = null; }
+  if (L._autoCastT) { clearTimeout(L._autoCastT); L._autoCastT = null; }
 }
 function setBob(show) {
   const b = $("mybob"); b.hidden = !show; if (!show) b.classList.remove("is-bite");
@@ -309,8 +346,16 @@ function showCatchReveal(item) {
     const delay = (Math.random() * 0.15).toFixed(2);
     drops += `<span class="drop" style="--dx:${dx}px;--dy:${dy}px;animation-delay:${delay}s"></span>`;
   }
+  // puffs of smoke the catch emerges from
+  let smoke = "";
+  for (let i = 0; i < 3; i++) {
+    const dx = Math.round(Math.random() * 50 - 25);
+    const delay = (i * 0.08).toFixed(2);
+    smoke += `<span class="smoke" style="top:${bobTop}%;margin-left:${dx}px;animation-delay:${delay}s"></span>`;
+  }
   stage.innerHTML =
     `<div class="splash" style="top:${bobTop}%"></div>
+     ${smoke}
      <div style="position:absolute;left:50%;top:${bobTop}%">${drops}</div>
      <div class="catch-creature ${big ? "big" : ""}" style="top:${bobTop}%">${item.icon}</div>`;
   stage.hidden = false;
@@ -343,19 +388,24 @@ function arm() {
   L.state = "armed"; L.peakAmp = 0; L.peakSpeed = 0; L.winding = false; L.lastYaw = 0; L.lastT = performance.now();
   svStatus("붕어 모드 ON", true);
   $("ab-phase").textContent = "② 캐스팅";
-  $("ab-hint").textContent = faceMode ? "고개를 빠르고 크게 돌렸다 정면으로!" : "스와이프하거나 버튼으로";
+  $("ab-hint").textContent = faceMode ? "가만히 있으면 자동으로 던져요!" : "스와이프하거나 버튼으로";
   $("castpad-hint").textContent = faceMode
-    ? "고개를 휙 돌렸다가 → 정면으로 돌아오면 던져져요!"
+    ? "잠시 후 자동으로 던져요! (고개를 휙 돌리면 더 멀리)"
     : "화면을 휙 스와이프하세요";
   $("castpad-sub").textContent = faceMode
-    ? "멀리(크게) 돌릴수록 더 멀리 날아가요"
+    ? "앉아서 입만 움직여도 OK"
     : "세게 스와이프 = 멀리 · 또는 아래 버튼";
   $("castpad").hidden = false;
   if (faceMode) {
     $("ab-ctrl").innerHTML =
-      `<div class="guide-live"><span class="gl-emoji">🔄</span>
-        <span class="gl-text">고개를 <b>휙</b> 돌렸다가 <b>정면</b>으로! (멀리 돌릴수록 멀리)</span>
+      `<div class="guide-live"><span class="gl-emoji">🎣</span>
+        <span class="gl-text"><b>자동으로 던지는 중…</b> 고개를 휙 돌리면 더 멀리!</span>
         <span class="gauge gl-gauge"><span class="gauge-fill cast-fill" id="cast-fill"></span></span></div>`;
+    // hands-free: auto-cast shortly with a random power, unless a head-turn casts first
+    clearTimeout(L._autoCastT);
+    L._autoCastT = setTimeout(() => {
+      if (L.state === "armed") doCast(clamp(0.3 + Math.random() * 0.6, 0.1, 1));
+    }, 1500);
   } else {
     $("ab-ctrl").innerHTML = `<button class="btn btn-ghost" id="b-soft">살짝 던지기</button>`;
     $("b-soft").onclick = () => doCast(0.18);
@@ -364,6 +414,7 @@ function arm() {
 
 function doCast(power) {
   if (L.state !== "armed") return;
+  clearTimeout(L._autoCastT);
   L.state = "waiting"; L.power = power;
   $("castpad").hidden = true;
   const landing = 70 - power * 22;            // final resting depth (%)
@@ -438,7 +489,7 @@ function caught() {
   const item = pickItem(L.power);
   const { isNewBest } = store.addCatch(item);
   showCatchReveal(item);
-  refreshChips(); renderMiniRank();
+  refreshChips(); refreshRank();
   svStatus("획득!", true);
   $("ab-phase").textContent = "✦ 획득!";
   $("ab-hint").textContent = isNewBest ? "내 최고 전리품 갱신!" : "어항에 들어갔어요";
@@ -446,13 +497,15 @@ function caught() {
   $("ab-ctrl").innerHTML =
     `<div class="ab-row"><div class="result"><div class="result-icc">${item.icon}</div>
        <div><div class="result-name">${item.name}</div><span class="rar rar-${t.cls}">${t.label}</span></div></div>
-     <button class="btn btn-blue" id="b-again">다시 낚기</button></div>`;
-  $("b-again").onclick = toReady;
+     <span class="next-hint">곧 이어서 낚시… <button class="btn btn-ghost btn-sm" id="b-again">바로 ▶</button></span></div>`;
+  $("b-again").onclick = () => { clearTimeout(L._nextT); toReady(); };
   // celebratory sound
   blip(523, 0.09); setTimeout(() => blip(659, 0.09), 90); setTimeout(() => blip(784, 0.12), 180);
+  showCatchBanner(store.nickname, item.name, item.icon, item.tier, t.label);
   if (document.hidden) showNotify("🎉 낚았어요!", `${t.label} ${item.name} 획득!`, "catch");
-  if (pond) pond.broadcastCatch({ nick: store.nickname, itemName: item.name, tierLabel: t.label, tier: item.tier, icon: item.icon });
-  if (t.rank >= 3) showToast(`${store.nickname}님이 ${t.label} ${item.name}을(를) 낚았어요!`);
+  if (pond) { pond.broadcastCatch({ nick: store.nickname, itemName: item.name, tierLabel: t.label, tier: item.tier, icon: item.icon }); pond.updateState({ score: store.score(), best: t.label }); }
+  // auto-continue to the next cast — no button needed
+  L._nextT = setTimeout(() => { if (L.state === "caught") toReady(); }, 2700);
 }
 
 function missed() {
@@ -461,9 +514,12 @@ function missed() {
   svStatus("놓침", false);
   $("ab-phase").textContent = "놓침";
   $("ab-hint").textContent = "놓친 붕어가 더 크다…";
-  $("ab-ctrl").innerHTML = `<button class="btn btn-blue" id="b-again2">다시 낚기</button>`;
-  $("b-again2").onclick = toReady;
+  $("ab-ctrl").innerHTML =
+    `<div class="ab-row"><span class="gl-text">아깝다! <b>다시 던질게요</b></span>
+     <span class="next-hint">곧 이어서… <button class="btn btn-ghost btn-sm" id="b-again2">바로 ▶</button></span></div>`;
+  $("b-again2").onclick = () => { clearTimeout(L._nextT); toReady(); };
   blip(200, 0.18, "sawtooth", 0.04);
+  L._nextT = setTimeout(() => { if (L.state === "missed") toReady(); }, 1900);
 }
 
 // ----- face-driven loop -----
@@ -578,10 +634,22 @@ function showToast(msg) {
 }
 
 function renderMiniRank() {
-  const { rows } = store.ranking();
-  $("mini-rank").innerHTML = `<h4>오늘의 붕어왕</h4>` + rows.slice(0, 3).map((r, i) =>
-    `<div class="mr-row"><span class="mr-no">${i + 1}</span><span class="mr-nick">${r.nick}</span>
-     <span class="mr-dot" style="background:${TIERS[r.tier].dot}"></span></div>`).join("");
+  const { rows, myRank } = store.ranking();
+  const medals = ["🥇", "🥈", "🥉"];
+  const top = rows.slice(0, 3).map((r, i) => {
+    const t = TIERS[r.tier];
+    return `<div class="mr-row ${r.me ? "me" : ""}">
+      <span class="mr-no">${medals[i] || i + 1}</span>
+      <span class="mr-nick">${escapeHtml(r.nick)}</span>
+      <span class="mr-dot" style="background:${t.dot}"></span>
+      <span class="mr-score">${r.score}</span></div>`;
+  }).join("");
+  $("mini-rank").innerHTML =
+    `<h4>🎣 실시간 낚시터 현황</h4>${top}
+     <div class="mr-me-row">
+       <span class="mr-me-label">나 · ${myRank}위</span>
+       <span class="mr-me-stat"><b>${store.score()}</b>점 · 🐟${store.totalCaught()}</span>
+     </div>`;
 }
 
 // ---------- MODALS ----------

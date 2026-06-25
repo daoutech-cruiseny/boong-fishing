@@ -78,7 +78,22 @@
 <!-- ============ LOBBY (MAIN GAME) ============ -->
 <section id="screen-lobby" class="screen">
   <div class="game">
-    <div class="pond-bg" aria-hidden="true"></div>
+    <div class="pond-bg pond-scene" aria-hidden="true">
+      <span class="sun"></span>
+      <span class="cloud cl1">☁️</span><span class="cloud cl2">☁️</span><span class="cloud cl3">☁️</span>
+      <span class="scene-item tree tr1">🌳</span><span class="scene-item tree tr2">🌲</span>
+      <span class="scene-item tree tr3">🌳</span><span class="scene-item bush bs1">🌿</span>
+      <span class="scene-item flower fw1">🌷</span><span class="scene-item flower fw2">🌼</span>
+      <span class="scene-item flower fw3">🌸</span>
+      <span class="scene-item reed rd1">🌾</span><span class="scene-item reed rd2">🌾</span>
+      <span class="scene-item duck dk1">🦆</span>
+      <span class="scene-item dock">🛶</span>
+      <span class="lilypad lp1">🪷</span><span class="lilypad lp2">🪷</span>
+      <span class="pond-fish pf1">🐟</span><span class="pond-fish pf2">🐠</span>
+      <span class="ripple rp1"></span><span class="ripple rp2"></span>
+    </div>
+
+    <div id="catch-banner" class="catch-banner" aria-live="polite"></div>
 
     <header class="topbar">
       <span class="room-name">다우 낭낭저수지 <b id="online-count" class="online-count" hidden></b></span>

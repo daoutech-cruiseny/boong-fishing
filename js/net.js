@@ -41,7 +41,7 @@ export class Pond {
         const state = ch.presenceState();
         const users = Object.entries(state).map(([key, metas]) => {
           const m = (metas && metas[0]) || {};
-          return { nick: m.nick || key, since: m.since || 0 };
+          return { nick: m.nick || key, since: m.since || 0, score: m.score || 0, best: m.best || "" };
         });
         if (this.onPresence) this.onPresence(users);
       });
@@ -56,7 +56,8 @@ export class Pond {
           if (settled) return;
           if (status === "SUBSCRIBED") {
             settled = true;
-            ch.track({ nick, since: Date.now() });
+            this._meta = { nick, since: Date.now(), score: 0, best: "" };
+            ch.track(this._meta);
             resolve();
           } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
             settled = true;
@@ -77,6 +78,13 @@ export class Pond {
       this._channel = null;
       return false;
     }
+  }
+
+  // update my live score/trophy so everyone's leaderboard reflects it
+  updateState(partial) {
+    if (!this._channel || !this._meta) return;
+    Object.assign(this._meta, partial);
+    try { this._channel.track(this._meta); } catch (e) { /* ignore */ }
   }
 
   // announce a local catch to everyone in the room

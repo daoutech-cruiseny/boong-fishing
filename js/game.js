@@ -11,33 +11,48 @@ export const TIERS = {
 };
 
 // `big: true` → creature that dramatically breaches the water on reel-in.
+// Arcade odds (not realistic): junk is rare, fun creatures show up all the time.
 export const ITEMS = [
-  { id: "weed",     name: "물풀",            tier: "junk",   weight: 12,  icon: "🌿" },
-  { id: "boot",     name: "낡은 장화",        tier: "junk",   weight: 6,   icon: "👢" },
-  { id: "can",      name: "녹슨 깡통",        tier: "junk",   weight: 5,   icon: "🥫" },
-  { id: "fish",     name: "물고기",          tier: "common", weight: 18,  icon: "🐟", big: true },
-  { id: "coin",     name: "동전",            tier: "common", weight: 12,  icon: "🪙" },
-  { id: "marble",   name: "유리 구슬",        tier: "common", weight: 8,   icon: "🔵" },
-  { id: "leaf",     name: "물든 단풍잎",      tier: "common", weight: 8,   icon: "🍁" },
-  { id: "frog",     name: "놀란 개구리",      tier: "common", weight: 6,   icon: "🐸", big: true },
-  { id: "mirror",   name: "은 손거울",        tier: "rare",   weight: 5,   icon: "🪞" },
-  { id: "button",   name: "진주 단추",        tier: "rare",   weight: 4,   icon: "⚪" },
-  { id: "silver",   name: "은화 한 닢",       tier: "rare",   weight: 3,   icon: "🥈" },
-  { id: "watch",    name: "골동 회중시계",    tier: "rare",   weight: 3,   icon: "⏱️" },
-  { id: "turtle",   name: "느긋한 거북",      tier: "rare",   weight: 3,   icon: "🐢", big: true },
-  { id: "puffer",   name: "성난 복어",        tier: "rare",   weight: 2.5, icon: "🐡", big: true },
-  { id: "chest",    name: "황금 보물상자",    tier: "epic",   weight: 2.5, icon: "🎁" },
-  { id: "ruby",     name: "루비 원석",        tier: "epic",   weight: 1.5, icon: "💎" },
-  { id: "compass",  name: "황동 나침반",      tier: "epic",   weight: 1.5, icon: "🧭" },
-  { id: "octopus",  name: "길 잃은 대왕문어",  tier: "epic",   weight: 1.2, icon: "🐙", big: true },
-  { id: "shark",    name: "민물 상어?!",       tier: "epic",   weight: 1.0, icon: "🦈", big: true },
-  { id: "dolphin",  name: "탈출한 돌고래",     tier: "epic",   weight: 0.8, icon: "🐬", big: true },
-  { id: "pika",     name: "물에 빠진 전기쥐?!", tier: "epic",   weight: 0.6, icon: "⚡", big: true },
-  { id: "urn",      name: "고대 유물 항아리", tier: "legend", weight: 0.8, icon: "🏺" },
-  { id: "carp",     name: "전설의 월척 잉어", tier: "legend", weight: 0.4, icon: "🐠", big: true },
-  { id: "whale",    name: "저수지의 고래",     tier: "legend", weight: 0.4, icon: "🐳", big: true },
-  { id: "gyara",    name: "갸라도스(사칭)",    tier: "legend", weight: 0.25, icon: "🐉", big: true },
-  { id: "kraken",   name: "전설의 대왕오징어", tier: "legend", weight: 0.2, icon: "🦑", big: true },
+  // 꽝 (희박)
+  { id: "weed",     name: "물풀",              tier: "junk",   weight: 4,  icon: "🌿" },
+  { id: "boot",     name: "낡은 장화",          tier: "junk",   weight: 3,  icon: "👢" },
+  { id: "can",      name: "녹슨 깡통",          tier: "junk",   weight: 3,  icon: "🥫" },
+  // 일반
+  { id: "fish",     name: "붕어",              tier: "common", weight: 12, icon: "🐟", big: true },
+  { id: "frog",     name: "놀란 개구리",        tier: "common", weight: 9,  icon: "🐸", big: true },
+  { id: "coin",     name: "동전",              tier: "common", weight: 7,  icon: "🪙" },
+  { id: "leaf",     name: "물든 단풍잎",        tier: "common", weight: 6,  icon: "🍁" },
+  { id: "tadpole",  name: "올챙이 떼",          tier: "common", weight: 7,  icon: "🐸", big: true },
+  // 희귀
+  { id: "turtle",   name: "느긋한 거북",        tier: "rare",   weight: 7,  icon: "🐢", big: true },
+  { id: "puffer",   name: "빵빵 복어",          tier: "rare",   weight: 7,  icon: "🐡", big: true },
+  { id: "mushroom", name: "버섯 몬스터",        tier: "rare",   weight: 5,  icon: "🍄", big: true },
+  { id: "ghost",    name: "물귀신 디지몬",       tier: "rare",   weight: 5,  icon: "👻", big: true },
+  { id: "seed",     name: "풀씨 괴물(이상해씨 닮음)", tier: "rare", weight: 5, icon: "🌱", big: true },
+  { id: "silver",   name: "은화 한 닢",         tier: "rare",   weight: 4,  icon: "🥈" },
+  { id: "watch",    name: "골동 회중시계",      tier: "rare",   weight: 4,  icon: "⏱️" },
+  // 에픽
+  { id: "octopus",  name: "대왕문어",           tier: "epic",   weight: 5,  icon: "🐙", big: true },
+  { id: "shark",    name: "민물 상어?!",         tier: "epic",   weight: 5,  icon: "🦈", big: true },
+  { id: "pika",     name: "전기쥐(피카츄 닮음)", tier: "epic",   weight: 5,  icon: "⚡", big: true },
+  { id: "salaman",  name: "불도마뱀(파이리 닮음)", tier: "epic", weight: 4,  icon: "🦎", big: true },
+  { id: "robot",    name: "로봇 디지몬",         tier: "epic",   weight: 4,  icon: "🤖", big: true },
+  { id: "alien",    name: "외계 디지몬",         tier: "epic",   weight: 4,  icon: "👾", big: true },
+  { id: "dolphin",  name: "탈출한 돌고래",       tier: "epic",   weight: 4,  icon: "🐬", big: true },
+  { id: "dragonet", name: "아기 드래곤",         tier: "epic",   weight: 3,  icon: "🐲", big: true },
+  { id: "chest",    name: "황금 보물상자",       tier: "epic",   weight: 4,  icon: "🎁" },
+  { id: "star",     name: "떨어진 별",           tier: "epic",   weight: 3,  icon: "⭐" },
+  { id: "crown",    name: "잃어버린 왕관",       tier: "epic",   weight: 3,  icon: "👑" },
+  // 전설
+  { id: "whale",    name: "저수지의 고래",       tier: "legend", weight: 2.4, icon: "🐳", big: true },
+  { id: "gyara",    name: "갸라도스(사칭)",      tier: "legend", weight: 2.0, icon: "🐉", big: true },
+  { id: "kraken",   name: "전설의 대왕오징어",   tier: "legend", weight: 1.8, icon: "🦑", big: true },
+  { id: "dino",     name: "공룡 디지몬",         tier: "legend", weight: 1.8, icon: "🦖", big: true },
+  { id: "phoenix",  name: "불사조",             tier: "legend", weight: 1.6, icon: "🦅", big: true },
+  { id: "mermaid",  name: "저수지의 인어",       tier: "legend", weight: 1.6, icon: "🧜", big: true },
+  { id: "unicorn",  name: "물 유니콘",           tier: "legend", weight: 1.4, icon: "🦄", big: true },
+  { id: "carp",     name: "전설의 월척 잉어",     tier: "legend", weight: 1.8, icon: "🐠", big: true },
+  { id: "urn",      name: "고대 유물 항아리",     tier: "legend", weight: 1.6, icon: "🏺" },
 ];
 const ITEM_BY_ID = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
 
@@ -66,8 +81,11 @@ export function hookDifficulty(power, globalMult = 1) {
 }
 
 export function pickItem(power = 0) {
-  const rareMult = power > 0.7 ? 1.8 : power > 0.4 ? 1.2 : 1;
-  const junkMult = clamp(0.55 - 0.3 * power, 0.25, 0.55);   // fewer 꽝, even fewer when deep
+  // arcade chaos: ~16% of the time grab a totally random item (any tier!) so
+  // jackpots and weird stuff pop up unpredictably — "중구난방" 재미
+  if (Math.random() < 0.16) return ITEMS[Math.floor(Math.random() * ITEMS.length)];
+  const rareMult = power > 0.7 ? 1.8 : power > 0.4 ? 1.3 : 1;
+  const junkMult = clamp(0.45 - 0.3 * power, 0.18, 0.45);   // 꽝은 더 희박
   const weighted = ITEMS.map((it) => {
     const rank = TIERS[it.tier].rank;
     let w = it.weight;

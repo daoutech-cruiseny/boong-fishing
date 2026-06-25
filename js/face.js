@@ -74,6 +74,18 @@ export class FaceTracker {
     videoEl.srcObject = this._stream;
     await videoEl.play();
 
+    // Try a ~2x camera zoom where supported — a bigger face means the mouth
+    // gestures read reliably from a comfortable seated distance.
+    try {
+      const track = this._stream.getVideoTracks()[0];
+      const caps = track && track.getCapabilities ? track.getCapabilities() : null;
+      if (caps && caps.zoom) {
+        const target = Math.min(caps.zoom.max || 2, Math.max(caps.zoom.min || 1, 2));
+        await track.applyConstraints({ advanced: [{ zoom: target }] });
+        this.zoomApplied = target;
+      }
+    } catch (e) { /* zoom unsupported — adaptive thresholds still handle distance */ }
+
     // 2) model (CDN). If this fails we keep camera but no detection.
     try {
       const mod = await import(ESM_URL);
