@@ -162,17 +162,25 @@ body {
 @media (prefers-reduced-motion: reduce) { .cloud, .duck { animation: none; } }
 
 /* ---------- big "catch!" banner beside the ranking ---------- */
-.catch-banner { position:absolute; top: 58px; left: 12px; right: 244px; z-index: 22;
+/* sits in the top-center gap between the selfview (left) and ranking (right) */
+.catch-banner { position:absolute; top: 58px; left: 50%; max-width: min(460px, calc(100% - 360px)); z-index: 22;
   display:flex; align-items:center; gap: 11px; background: rgba(255,255,255,.97);
   border: 2px solid var(--coral); border-radius: 16px; padding: 11px 16px; box-shadow: var(--shadow);
-  opacity: 0; transform: translateY(-14px) scale(.96); pointer-events:none; transition: opacity .25s ease, transform .25s ease; }
-.catch-banner.show { opacity: 1; transform: translateY(0) scale(1); }
+  opacity: 0; transform: translate(-50%, -14px) scale(.96); pointer-events:none; transition: opacity .25s ease, transform .25s ease; }
+.catch-banner.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
 .catch-banner.hot { border-color: #C9A227; background: linear-gradient(100deg, #FFF7E0, #FFFDF6); animation: bannerPop .5s ease; }
-@keyframes bannerPop { 0% { transform: scale(.9); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
+@keyframes bannerPop { 0% { transform: translate(-50%,0) scale(.92); } 60% { transform: translate(-50%,0) scale(1.04); } 100% { transform: translate(-50%,0) scale(1); } }
 .cb-icon { font-size: 34px; line-height:1; flex:none; }
 .cb-text { font-size: 16px; font-weight: 600; color: var(--ink); line-height: 1.3; }
 .cb-text b { color: var(--coral-strong, #C0392B); }
-@media (max-width: 560px) { .catch-banner { right: 160px; font-size: 13px; padding: 8px 11px; } .cb-text { font-size: 13px; } }
+/* on phones, drop the banner below the selfview/ranking row so nothing overlaps */
+@media (max-width: 560px) {
+  .catch-banner { top: 152px; left: 8px; right: 8px; max-width: none;
+    transform: translateY(-10px) scale(.97); }
+  .catch-banner.show { transform: translateY(0) scale(1); }
+  @keyframes bannerPop { 0%{transform:translateY(0) scale(.95)} 60%{transform:translateY(0) scale(1.03)} 100%{transform:translateY(0) scale(1)} }
+  .cb-text { font-size: 13px; }
+}
 
 /* leaderboard sections in the live ranking panel */
 .mr-section { font-size: 11px; color: var(--faint); font-weight: 700; margin: 8px 0 2px; }
@@ -361,7 +369,7 @@ body {
   .cg-arrow { opacity:.7; }
 }
 
-.selfview { position:absolute; bottom: 110px; left: 12px; width: 126px; height: 102px; background: rgba(255,255,255,.93);
+.selfview { position:absolute; top: 56px; left: 12px; width: 150px; height: 120px; background: rgba(255,255,255,.93);
   border:1px solid var(--line); border-radius: 14px; overflow:hidden; z-index: 12; }
 .selfview-label { position:absolute; top:6px; left:10px; font-size: 11px; color: var(--faint); z-index:2; }
 .selfview-video { width:100%; height:100%; object-fit: cover; transform: scaleX(-1) scale(2); transform-origin: center; background:#dfeaf3; }
@@ -486,7 +494,7 @@ body {
 /* ---------- responsive ---------- */
 @media (max-width: 560px) {
   .mini-rank { width: 140px; top: 56px; }
-  .selfview { width: 104px; height: 86px; bottom: 104px; }
+  .selfview { width: 108px; height: 88px; top: 56px; }
   .pod-tname { font-size: 11px; }
 }
 
