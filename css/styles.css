@@ -211,6 +211,14 @@ body {
   55%  { opacity:1; }
   100% { transform: translateX(-50%) scaleY(1); opacity:1; }
 }
+/* the line + bobber fly out in an arc when you cast */
+.mybob.flying { animation: castFly .7s cubic-bezier(.22,.68,.3,1) forwards; }
+@keyframes castFly {
+  0%   { top: var(--cast-start, 90%); }
+  55%  { top: var(--cast-apex, 40%); }
+  100% { top: var(--cast-land, 60%); }
+}
+@media (prefers-reduced-motion: reduce) { .mybob.flying { animation: none; top: var(--cast-land, 60%); } }
 
 /* ---------- catch breach (creature rises out of the water) ---------- */
 .catch-stage { position:absolute; inset:0; z-index: 20; pointer-events:none; }

@@ -254,6 +254,15 @@ function setBob(show) {
   const b = $("mybob"); b.hidden = !show; if (!show) b.classList.remove("is-bite");
 }
 
+// quick water plop where the lure lands
+function splashAt(topPct) {
+  const stage = $("catch-stage"); if (!stage) return;
+  stage.innerHTML = `<div class="splash" style="top:${topPct}%"></div>`;
+  stage.hidden = false;
+  clearTimeout(stage._t);
+  stage._t = setTimeout(() => { if (L.state === "waiting") { stage.hidden = true; stage.innerHTML = ""; } }, 850);
+}
+
 // creature/trophy breaches the water at the bob, with a splash and droplets
 function showCatchReveal(item) {
   const stage = $("catch-stage"); if (!stage) return;
@@ -323,11 +332,24 @@ function doCast(power) {
   if (L.state !== "armed") return;
   L.state = "waiting"; L.power = power;
   $("castpad").hidden = true;
-  const landing = 70 - power * 22;
+  const landing = 70 - power * 22;            // final resting depth (%)
   const b = $("mybob");
-  b.style.transition = "none"; b.style.top = "70%"; setBob(true);
-  b.classList.add("casting"); setTimeout(() => b.classList.remove("casting"), 520);
-  requestAnimationFrame(() => { b.style.transition = "top .55s ease"; b.style.top = landing + "%"; });
+  // fly-out arc: launch near the angler, lob up past the target, settle down
+  b.classList.remove("casting", "flying");
+  b.style.transition = "none";
+  b.style.setProperty("--cast-start", "90%");
+  b.style.setProperty("--cast-apex", Math.max(8, landing - 12) + "%");
+  b.style.setProperty("--cast-land", landing + "%");
+  b.style.top = "90%";
+  setBob(true);
+  void b.offsetWidth;                         // reflow so the keyframe restarts
+  b.classList.add("flying", "casting");       // flying = arc, casting = line whip
+  clearTimeout(L._castT);
+  L._castT = setTimeout(() => {
+    b.classList.remove("flying", "casting");
+    b.style.top = landing + "%";
+    splashAt(landing);                        // little plop where it lands
+  }, 700);
   const diff = hookDifficulty(power, settings.difficultyMult);
   L.tapsNeeded = diff.tapsNeeded; L._window = diff.timeWindow;
   $("ab-phase").textContent = "③ 대기";
