@@ -30,7 +30,10 @@ export class Pond {
 
       // unique per-session key so two people with the same nickname both show
       this._key = nick + "#" + Math.random().toString(36).slice(2, 8);
-      const ch = this._client.channel("pond:" + this.room, {
+      // IMPORTANT: keep the topic ASCII/no-colon/no-space — special chars in the
+      // channel name silently break broadcast fan-out (presence still works).
+      const topic = "pond_" + encodeURIComponent(this.room).replace(/[^a-zA-Z0-9_]/g, "");
+      const ch = this._client.channel(topic, {
         config: { presence: { key: this._key }, broadcast: { self: false } },
       });
 
