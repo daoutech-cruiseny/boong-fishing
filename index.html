@@ -52,25 +52,26 @@
 <!-- ============ CALIBRATION ============ -->
 <section id="screen-cal" class="screen">
   <div class="cal-wrap">
-    <h2 class="cal-title">붕어 캘리브레이션</h2>
-    <p id="cal-instr" class="cal-instr">정면을 본 상태로 잠깐만 기다려 주세요</p>
+    <h2 id="cal-title" class="cal-title">얼굴을 비춰주세요</h2>
+    <p id="cal-instr" class="cal-instr">카메라 가운데에 얼굴을 맞춰 주세요</p>
 
     <div class="cal-stage">
       <video id="cal-video" class="cal-video" playsinline muted></video>
       <div class="cal-guide" aria-hidden="true"></div>
+      <div id="cal-cue" class="cal-cue" aria-hidden="true">😊</div>
       <div id="cal-badge" class="cal-badge">얼굴을 찾는 중…</div>
     </div>
 
     <div class="cal-steps">
-      <div id="cal-step-1" class="cal-step"><span class="cal-dot"></span>정면 인식</div>
+      <div id="cal-step-1" class="cal-step"><span class="cal-dot"></span>얼굴 인식</div>
       <div id="cal-step-2" class="cal-step"><span class="cal-dot"></span>입 'O' 인식</div>
     </div>
 
     <div class="cal-actions">
-      <button id="btn-cal-neutral" class="btn btn-primary">정면 보정 시작</button>
-      <button id="btn-cal-skip" class="btn btn-ghost">건너뛰기</button>
+      <button id="btn-cal-neutral" class="btn btn-primary" hidden>시작하기</button>
+      <button id="btn-cal-skip" class="btn btn-ghost btn-sm">바로 시작 ›</button>
     </div>
-    <p class="cal-note">잘 안되면 밝은 곳에서 얼굴을 화면 가운데 맞춰 주세요.</p>
+    <p class="cal-note">자동으로 인식돼요 · 밝은 곳에서 얼굴을 화면 가운데 맞춰 주세요</p>
   </div>
 </section>
 

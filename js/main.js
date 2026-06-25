@@ -144,41 +144,75 @@ async function startFace() {
 }
 
 function setupCalButtonsNoFace() {
+  $("cal-title").textContent = "버튼으로 즐기기";
   $("cal-instr").textContent = "카메라 없이 버튼·키보드로 플레이합니다";
-  $("btn-cal-neutral").textContent = "버튼으로 시작";
+  const cue = $("cal-cue"); if (cue) cue.textContent = "🎮";
+  const b = $("btn-cal-neutral");
+  b.hidden = false; b.textContent = "시작하기"; b.onclick = enterLobby;
   $("btn-cal-skip").hidden = true;
 }
 
 function setupCalibration() {
-  $("btn-cal-neutral").addEventListener("click", onCalNeutral, { once: false });
-  $("btn-cal-skip").addEventListener("click", enterLobby);
+  $("btn-cal-skip").addEventListener("click", enterLobby, { once: false });
+  if (faceMode) startAutoCal();
 }
 
-let calStage = 0;
-async function onCalNeutral() {
-  if (!faceMode) { enterLobby(); return; }
-  if (calStage === 0) {
-    $("cal-instr").textContent = "정면을 본 채로… 보정 중";
-    $("btn-cal-neutral").disabled = true;
-    await face.captureNeutral(900);
-    $("btn-cal-neutral").disabled = false;
-    $("cal-step-1").classList.add("done");
-    calStage = 1;
-    $("cal-instr").textContent = "입을 크게 'O'로 벌린 채 아래 버튼을 누르세요";
-    $("btn-cal-neutral").textContent = "입 'O' 인식";
-  } else if (calStage === 1) {
-    // measure the user's real 'O' peak → thresholds adapt to their distance
-    $("cal-instr").textContent = "그대로 'O' 유지… 인식 중";
-    $("btn-cal-neutral").disabled = true;
-    const got = await face.captureO(1500);
-    $("btn-cal-neutral").disabled = false;
-    $("cal-step-2").classList.add("done");
-    calStage = 2;
-    $("cal-instr").textContent = got ? "좋아요! 이 거리에 맞게 맞췄어요 — 멀어도 OK" : "괜찮아요 — 바로 시작해도 돼요";
-    $("btn-cal-neutral").textContent = "낚시 시작";
-  } else {
-    enterLobby();
-  }
+// ----- auto-guided calibration: big on-screen cues, no button clicking -----
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function onCalScreen() { return $("screen-cal").classList.contains("is-active"); }
+function setCue(emoji, title, instr) {
+  const c = $("cal-cue"); if (c) c.textContent = emoji;
+  $("cal-title").textContent = title;
+  $("cal-instr").textContent = instr;
+}
+// resolve true once cond() holds continuously for holdSec (false on timeout/leave)
+function holdUntil(cond, holdSec, timeoutMs) {
+  return new Promise((resolve) => {
+    const t0 = performance.now(); let last = t0, held = 0;
+    const tick = () => {
+      if (!onCalScreen()) return resolve(false);
+      const now = performance.now(); const dt = (now - last) / 1000; last = now;
+      held = cond() ? held + dt : 0;
+      if (held >= holdSec) return resolve(true);
+      if (now - t0 > timeoutMs) return resolve(false);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+let calRunning = false;
+async function startAutoCal() {
+  if (!faceMode || calRunning) return;
+  calRunning = true;
+  $("cal-step-1").classList.remove("done"); $("cal-step-2").classList.remove("done");
+  $("cal-cue").classList.remove("pulse");
+  // 1) center your face
+  setCue("😊", "얼굴을 비춰주세요", "카메라 가운데에 얼굴을 맞춰 주세요");
+  await holdUntil(() => face.faceFound, 0.8, 20000);
+  if (!onCalScreen()) { calRunning = false; return; }
+  // 2) capture neutral
+  setCue("😊", "좋아요! 그대로", "정면을 본 채 잠깐만…");
+  await face.captureNeutral(900);
+  $("cal-step-1").classList.add("done");
+  if (!onCalScreen()) { calRunning = false; return; }
+  // 3) make the 'O'
+  setCue("😮", "입을 크게 'O'!", "동그랗게 입을 벌려 주세요");
+  $("cal-cue").classList.add("pulse");
+  const gotO = await face.captureO(1800);
+  $("cal-cue").classList.remove("pulse");
+  $("cal-step-2").classList.add("done");
+  if (!onCalScreen()) { calRunning = false; return; }
+  // 4) done → auto-enter
+  setCue("🎣", "준비 끝!", gotO ? "이 거리에 맞췄어요 — 바로 시작!" : "바로 시작할게요!");
+  await sleep(900);
+  calRunning = false;
+  if (onCalScreen()) enterLobby();
+}
+function restartCalibration() {
+  $("cal-step-1").classList.remove("done"); $("cal-step-2").classList.remove("done");
+  showScreen("screen-cal");
+  if (faceMode) startAutoCal();
+  else setupCalButtonsNoFace();
 }
 
 // ---------- LOBBY ----------
@@ -659,7 +693,7 @@ function openSettings() {
     if (name === "notify") { if (settings.notify) settings.notify = false; else await enableNotify(); openSettings(); return; }
     settings[name] = !settings[name]; if (name === "sfx" && settings.sfx) blip(660, 0.07); openSettings();
   });
-  $("set-recal").onclick = () => { closeModal("panel-settings"); calStage = 0; $("cal-step-1").classList.remove("done"); $("cal-step-2").classList.remove("done"); $("btn-cal-neutral").textContent = "정면 보정 시작"; showScreen("screen-cal"); };
+  $("set-recal").onclick = () => { closeModal("panel-settings"); restartCalibration(); };
   $("set-clear").onclick = () => {
     if (confirm("어항을 비울까요? 되돌릴 수 없어요.")) { store.inventory = {}; store.best = null; store._save(); refreshChips(); renderMiniRank(); openSettings(); }
   };
