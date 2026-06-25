@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>고고 다우 낚시터 🎣 — 뚝딱톤 2026</title>
+<meta name="description" content="입을 'O'로 벌리면 붕어가 되어 낚시! 웹캠 얼굴인식으로 즐기는 사내 실시간 낚시 게임." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎣%3C/text%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --coral:#E2584A; --coral-strong:#C0392B; --ink:#2C2C2A; --muted:#6B6A66;
+    --sky:#DCEBF7; --grass:#CDE3A0; --water:#A9D4EE; --water-deep:#7FBFE6;
+    --surface:#fff; --surface-2:#F4F1EA; --line:#E7E3D8; --radius:18px;
+    --shadow:0 10px 30px rgba(44,44,42,.14); --shadow-sm:0 3px 10px rgba(44,44,42,.10);
+    --display:'Jua',system-ui,sans-serif; --hand:'Gaegu',system-ui,cursive; --ui:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--ui);color:var(--ink);background:var(--sky);line-height:1.6;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px;}
+
+  /* hero */
+  .hero{position:relative;overflow:hidden;text-align:center;padding:56px 20px 70px;
+    background:linear-gradient(var(--sky) 0%,var(--sky) 42%,var(--grass) 42%,var(--grass) 60%,var(--water) 60%,var(--water-deep) 100%);}
+  .hero .sun{position:absolute;top:24px;right:14%;width:76px;height:76px;border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#FFE9A6,#FBD45F);opacity:.92;}
+  .hero .cloud{position:absolute;font-size:34px;opacity:.9;}
+  .badge{display:inline-block;font-family:var(--ui);font-size:13px;font-weight:700;color:var(--coral-strong);
+    background:#fff;border:1.5px solid var(--coral);border-radius:999px;padding:5px 14px;margin-bottom:14px;box-shadow:var(--shadow-sm);}
+  h1.title{font-family:var(--display);font-size:clamp(40px,8vw,68px);color:var(--coral);margin:6px 0 6px;letter-spacing:.5px;
+    text-shadow:0 3px 0 #fff;}
+  .tagline{font-family:var(--hand);font-size:clamp(18px,4vw,24px);color:#15506F;margin:0 0 22px;font-weight:700;}
+  .hero-fish{font-size:64px;filter:drop-shadow(0 6px 8px rgba(0,0,0,.18));}
+
+  /* sections */
+  section{padding:38px 0;}
+  h2{font-family:var(--display);font-size:26px;color:var(--ink);text-align:center;margin:0 0 22px;}
+  .lead{text-align:center;font-size:17px;color:var(--muted);max-width:620px;margin:0 auto 6px;}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px 14px;text-align:center;box-shadow:var(--shadow-sm);}
+  .step .em{font-size:44px;line-height:1;}
+  .step .n{display:inline-block;font-family:var(--display);color:var(--coral);font-size:15px;margin:8px 0 4px;}
+  .step .t{font-size:14px;color:var(--muted);}
+  .step b{color:var(--ink);}
+
+  .feats{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  .feat{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 16px;box-shadow:var(--shadow-sm);}
+  .feat .fi{font-size:28px;line-height:1;flex:none;}
+  .feat .fh{font-weight:700;font-size:15px;margin:0 0 2px;}
+  .feat .fp{font-size:13.5px;color:var(--muted);margin:0;}
+
+  .trophies{text-align:center;font-size:34px;letter-spacing:6px;line-height:1.8;}
+  .note{text-align:center;font-size:13px;color:var(--muted);background:var(--surface-2);border-radius:12px;padding:12px 16px;max-width:620px;margin:18px auto 0;}
+
+  /* CTA */
+  .cta{background:linear-gradient(180deg,var(--water),var(--water-deep));text-align:center;padding:54px 20px 60px;border-radius:28px 28px 0 0;margin-top:24px;}
+  .cta h2{color:#0F3B53;}
+  .cta p{color:#0F3B53;opacity:.85;margin:0 0 22px;}
+  .play-btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-size:24px;color:#fff;
+    background:var(--coral);border:none;border-radius:999px;padding:18px 38px;text-decoration:none;cursor:pointer;
+    box-shadow:0 8px 0 var(--coral-strong),0 14px 24px rgba(192,57,43,.35);transition:transform .12s,box-shadow .12s;}
+  .play-btn:hover{transform:translateY(2px);box-shadow:0 6px 0 var(--coral-strong),0 10px 18px rgba(192,57,43,.35);}
+  .play-btn:active{transform:translateY(8px);box-shadow:0 0 0 var(--coral-strong);}
+  .cta .sub{font-size:13px;color:#0F3B53;opacity:.75;margin-top:16px;}
+
+  footer{text-align:center;font-size:13px;color:var(--muted);padding:22px 20px 36px;}
+  footer .author{font-weight:700;color:var(--ink);}
+  @media (max-width:560px){
+    .steps{grid-template-columns:1fr;} .feats{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+  <header class="hero">
+    <span class="cloud" style="top:18px;left:10%;">☁️</span>
+    <span class="cloud" style="top:54px;left:30%;font-size:26px;">☁️</span>
+    <span class="sun"></span>
+    <div class="wrap">
+      <span class="badge">🛠️ 다우 뚝딱톤 2026 출품작</span>
+      <div class="hero-fish">🎣🐟</div>
+      <h1 class="title">고고 다우 낚시터</h1>
+      <p class="tagline">입을 'O'로 벌리면 붕어가 되어 낚시! 웹캠으로 즐기는 실시간 낚시터</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section>
+      <h2>이게 뭔가요?</h2>
+      <p class="lead">
+        카메라 앞에서 <b>입을 동그랗게 'O'</b>로 벌리면 붕어로 변신!
+        얼굴 인식(MediaPipe)으로 <b>캐스팅 → 입질 대기 → 뻐끔 챔질</b>의 낚시 한 판을 즐깁니다.
+        설치·로그인 없이 브라우저만 있으면 바로 플레이. 보상은 전부 <b>가짜(재미용)</b>예요.
+      </p>
+      <p class="lead" style="margin-top:10px;">
+        업무 중 듀얼모니터 한쪽에 띄워두고, <b>앉아서 입만 움직여</b> 쉬는 시간 한 마리씩 낚는 사내 힐링 게임 🐟
+      </p>
+    </section>
+
+    <section>
+      <h2>이렇게 즐겨요</h2>
+      <div class="steps">
+        <div class="step"><div class="em">😮</div><div class="n">STEP 1</div><div class="t">입을 동그랗게 <b>'O'</b>로<br>붕어 모드 ON</div></div>
+        <div class="step"><div class="em">🎣</div><div class="n">STEP 2</div><div class="t"><b>자동으로 찌가 날아가</b><br>입질을 기다려요</div></div>
+        <div class="step"><div class="em">🐠</div><div class="n">STEP 3</div><div class="t">입질이 오면 <b>뻐끔뻐끔</b><br>챔질해서 낚아요!</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>특징</h2>
+      <div class="feats">
+        <div class="feat"><span class="fi">🙌</span><div><p class="fh">손 안 쓰는 핸즈프리</p><p class="fp">버튼 클릭 없이 입 모양만으로 끊김 없이 자동 진행. 업무하며 곁눈질로도 OK.</p></div></div>
+        <div class="feat"><span class="fi">🟢</span><div><p class="fh">실시간 낚시터</p><p class="fp">접속자 목록·점수가 실시간 반영. 누가 잡으면 모두에게 "OOO님 획득!" 알림.</p></div></div>
+        <div class="feat"><span class="fi">🐳</span><div><p class="fh">35종 전리품</p><p class="fp">붕어부터 고래·상어·인어·유니콘, 포켓몬·디지몬 패러디까지 중구난방 잭팟!</p></div></div>
+        <div class="feat"><span class="fi">🌳</span><div><p class="fh">귀여운 낚시터</p><p class="fp">'동물의 숲'풍 아기자기한 저수지 씬과 결과 연출(물보라·연기 등장).</p></div></div>
+        <div class="feat"><span class="fi">🔔</span><div><p class="fh">자리 비워도 OK</p><p class="fp">백그라운드 탭이어도 입질·획득 시 브라우저 알림으로 알려줘요.</p></div></div>
+        <div class="feat"><span class="fi">🔒</span><div><p class="fh">개인정보 안심</p><p class="fp">웹캠 영상은 기기 안에서만 얼굴 지표 계산에 쓰이고 저장·전송되지 않아요.</p></div></div>
+      </div>
+      <div class="trophies">🐟 🐸 🐢 🐡 🐙 🦈 ⚡ 🦎 🤖 👾 🐬 🐲 🐳 🐉 🦑 🦖 🦅 🧜 🦄</div>
+    </section>
+
+    <section class="cta">
+      <h2>🎣 지금 바로 낚으러 가요!</h2>
+      <p>아래 버튼을 누르면 실제 운영 중인 낚시터로 이동합니다. (카메라 권한 허용 필요)</p>
+      <a class="play-btn" href="https://daoutech-cruiseny.github.io/boong-fishing/" target="_blank" rel="noopener">🎣 고고 다우 낚시터 입장하기</a>
+      <p class="sub">크롬·엣지 등 최신 브라우저 + 웹캠 권장 · 카메라가 없어도 버튼/키보드로 플레이 가능</p>
+    </section>
+  </main>
+
+  <footer>
+    🛠️ <b>다우 뚝딱톤 2026</b> 출품작 · 제출자 <span class="author">차분한 이정붕</span><br>
+    가짜 보상으로 즐기는 재미용 게임입니다 🐟
+  </footer>
+
+</body>
+</html>
